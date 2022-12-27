@@ -1,4 +1,5 @@
 import requests
+from bs4 import BeautifulSoup
 
 
 # Ping URL function
@@ -29,5 +30,118 @@ def login(session, url, username, password):
         print('An error occurred!')
         return False
 
+# Get the course IDs of the courses the user is enrolled in
 
 
+def get_course_content_links(session, url, course_id, content_id):
+    # Set the URL of the course content page
+    content_url = url + '/webapps/blackboard/content/listContent.jsp?course_id=' + \
+        course_id + '&content_id=' + content_id
+
+    # Make a GET request to the course content page
+    response = session.get(content_url)
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find all the links to the content files
+    links = soup.find_all('a', {'class': 'item'})
+
+    # Create a list to store the URLs of the content files
+    file_urls = []
+
+    # Loop through the links
+    for link in links:
+        # Get the href attribute of the link
+        href = link.get('href')
+
+        # If the href attribute contains the word "listContent" it is a link to a subfolder
+        if 'listContent' in href:
+            # Get the URL of the subfolder
+            url = href.split('?', 1)[0]
+            # Get the ID of the subfolder
+            id = href.split('?', 1)[1].split('=')[1]
+
+            # Get the file URLs in the subfolder
+            subfolder_urls = get_course_content_links(
+                session, url, course_id, id)
+
+            # Add the file URLs in the subfolder to the list of file URLs
+            file_urls.extend(subfolder_urls)
+
+        # If the href attribute contains the word "content" it is a link to a file
+        elif 'content' in href:
+            # Get the URL of the file
+            url = href.split('?', 1)[0]
+            # Get the ID of the file
+            id = href.split('?', 1)[1].split('=')[1]
+
+            # Get the download URL of the file
+            file_url = get_file_download_url(session, url, course_id, id)
+
+            # Add the download URL to the list of file URLs
+            file_urls.append(file_url)
+
+    return file_urls
+
+def get_file_download_url(session, url, course_id, content_id):
+    # Set the URL of the file download page
+    download_url = url + '/webapps/blackboard/content/launchLink.jsp?course_id=' + \
+        course_id + '&content_id=' + content_id
+
+    # Make a GET request to the file download page
+    response = session.get(download_url)
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the link to the file
+    link = soup.find('a', {'class': 'resourceUrl'})
+
+    # Get the href attribute of the link
+    href = link.get('href')
+
+    return href
+
+# Get the download URL of a file
+def download_file(session, url, file_url):
+    file_response = session.get(file_url)
+    if file_response.status_code == 200:
+        return file_response.content
+    else:
+        raise Exception("An error occurred while downloading the file")
+
+
+def download_course_content(username, password, course_id, content_id):
+    # Set the URL of the Blackboard Learn instance
+    url = 'https://blackboard.kettering.edu/'
+
+    # Ping the URL to check if it is reachable
+    if ping_url(url) != 200:
+        print('The URL is not reachable')
+        return
+
+    # Create a session
+    session = requests.Session()
+
+    # Attempt to login
+    if not login(session, url, username, password):
+        print('Failed to login')
+        return
+
+    # Get the file URLs
+    file_urls = get_course_content_links(session, url, course_id, content_id)
+
+    # Download the files
+    for file_url in file_urls:
+        # Get the file content
+        file_content = download_file(session, url, file_url)
+
+        # Get the file name
+        file_name = file_url.split('/')[-1]
+
+        # Write the file content to a file
+        with open(file_name, 'wb') as f:
+            f.write(file_content)
+
+        print("Done!")
