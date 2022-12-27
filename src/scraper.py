@@ -84,6 +84,7 @@ def get_course_content_links(session, url, course_id, content_id):
 
     return file_urls
 
+
 def get_file_download_url(session, url, course_id, content_id):
     # Set the URL of the file download page
     download_url = url + '/webapps/blackboard/content/launchLink.jsp?course_id=' + \
@@ -104,6 +105,8 @@ def get_file_download_url(session, url, course_id, content_id):
     return href
 
 # Get the download URL of a file
+
+
 def download_file(session, url, file_url):
     file_response = session.get(file_url)
     if file_response.status_code == 200:
@@ -112,36 +115,30 @@ def download_file(session, url, file_url):
         raise Exception("An error occurred while downloading the file")
 
 
-def download_course_content(username, password, course_id, content_id):
-    # Set the URL of the Blackboard Learn instance
+def download_course_content(username, password):
+    # Set the URL you want to scrape
     url = 'https://blackboard.kettering.edu/'
 
-    # Ping the URL to check if it is reachable
-    if ping_url(url) != 200:
-        print('The URL is not reachable')
-        return
-
-    # Create a session
+    # Create a session to persist cookies
     session = requests.Session()
 
     # Attempt to login
-    if not login(session, url, username, password):
-        print('Failed to login')
-        return
+    if login(session, url, username, password):
+        # Get the course IDs and content IDs of the courses the user is enrolled in
+        courses = get_course_ids(session, url)
 
-    # Get the file URLs
-    file_urls = get_course_content_links(session, url, course_id, content_id)
-
-    # Download the files
-    for file_url in file_urls:
-        # Get the file content
-        file_content = download_file(session, url, file_url)
-
-        # Get the file name
-        file_name = file_url.split('/')[-1]
-
-        # Write the file content to a file
-        with open(file_name, 'wb') as f:
-            f.write(file_content)
-
-        print("Done!")
+        # Download the course content for each course
+        for course in courses:
+            course_id = course['course_id']
+            content_id = course['content_id']
+            print(f'Downloading course content for course {course_id}...')
+            links = get_course_content_links(
+                session, url, course_id, content_id)
+            for link in links:
+                file_url = link['file_url']
+                file_name = link['file_name']
+                download_file(session, url, file_url, file_name)
+                print(f'  Downloaded {file_name}')
+        print('Download complete!')
+    else:
+        print('Login failed!')
