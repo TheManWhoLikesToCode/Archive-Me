@@ -57,7 +57,3 @@ def scrappy(username, password):
         print(courses)
 
 
-scrappy("Free8864", "7G5@Tbr$w#amSgT")
-
-# Username = "Free8864"
-# password = "7G5@Tbr$w#amSgT"
