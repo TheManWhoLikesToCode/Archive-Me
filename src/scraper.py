@@ -37,27 +37,24 @@ def scrappy(username, password):
 
     # Wait for the redirect to occur
 
-    while driver.current_url == "https://blackboard.kettering.edu/webapps/login/":
-        pass
+    # Wait for the redirect to occur
+    if driver.current_url != "https://blackboard.kettering.edu/webapps/login/":
+        # On the redirected page accept the cookies policy
+        cookies_button = driver.find_element(By.ID, "agree_button")
+        cookies_button.click()
 
-    # On the redirected page accept the cookies policy
-    cookies_button = driver.find_element(By.ID, "agree_button")
-    cookies_button.click()
-    
-    # Find the list element that contains the class information
-    class_list = driver.find_element_by_css_selector(".portletList-img.courseListing.coursefakeclass.u_indent")
+        # Find the list items that contain the course information
+        course_items = driver.find_elements_by_css_selector(
+            ".portletList-img.courseListing.coursefakeclass.u_indent li")
 
-    # Find the list items within the list element
-    class_items = class_list.find_elements(By.TAG_NAME, "li")
+        # Extract the text of the 'a' element within each list item
+        courses = []
+        for item in course_items:
+            course_link = item.find_element(By.TAG_NAME, "a")
+            course_text = course_link.text
+            courses.append(course_text)
 
-    # Extract the text of the 'a' element within each list item
-    classes = []
-    for item in class_items:
-        class_link = item.find_element(By.TAG_NAME, "a")
-        class_text = class_link.text
-        classes.append(class_text)
-
-    print(classes)
+        print(courses)
 
 
 scrappy("Free8864", "7G5@Tbr$w#amSgT")
