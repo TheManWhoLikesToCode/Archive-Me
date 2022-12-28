@@ -2,6 +2,7 @@ def scrappy(username, password):
     # Import the necessary modules
     from selenium import webdriver
     from selenium.webdriver.common.by import By
+    import time
 
     # Create a webdriver object and set the desired options
     driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
@@ -37,27 +38,13 @@ def scrappy(username, password):
 
     # Wait for the redirect to occur
 
-    # Wait for the redirect to occur
-    if driver.current_url != "https://blackboard.kettering.edu/webapps/login/":
-        # On the redirected page accept the cookies policy
-        cookies_button = driver.find_element(By.ID, "agree_button")
-        cookies_button.click()
+    cookies_button = driver.find_element(By.ID, "agree_button")
+    cookies_button.click()
 
-        # Find the list items that contain the course information
-        course_items = driver.find_elements_by_css_selector(
-            ".portletList-img.courseListing.coursefakeclass.u_indent li")
-
-        # Extract the text of the 'a' element within each list item
-        courses = []
-        for item in course_items:
-            course_link = item.find_element(By.TAG_NAME, "a")
-            course_text = course_link.text
-            courses.append(course_text)
-
-        print(courses)
+    div = driver.find_element(By.ID, "_4_1termCourses__208_1")
+    # Print the course list
+    print(div.text)  
+    
+            
 
 
-scrappy("Free8864", "7G5@Tbr$w#amSgT")
-
-# Username = "Free8864"
-# password = "7G5@Tbr$w#amSgT"
