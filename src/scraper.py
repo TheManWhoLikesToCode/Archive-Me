@@ -1,61 +1,10 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QTabWidget
-
-
-class App(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        # Set the window properties
-        self.setWindowTitle("Blackboard Login")
-        self.setGeometry(100, 100, 400, 200)
-
-        # Create the username and password fields
-        self.username_field = QLineEdit(self)
-        self.password_field = QLineEdit(self)
-        self.password_field.setEchoMode(QLineEdit.Password)
-
-        # Create the login button
-        self.login_button = QPushButton("Login", self)
-        self.login_button.clicked.connect(self.login)
-
-        # Create the tab widget
-        self.tab_widget = QTabWidget(self)
-
-        # Create the layout
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("Username:", self))
-        layout.addWidget(self.username_field)
-        layout.addWidget(QLabel("Password:", self))
-        layout.addWidget(self.password_field)
-        layout.addWidget(self.login_button)
-        layout.addWidget(self.tab_widget)
-        self.setLayout(layout)
-
-    def login(self):
-
-        # Get the username and password from the fields
-        username = self.username_field.text()
-        password = self.password_field.text()
-
-
-
-        # Call the scrappy() function to get the course list
-        course_list = scrappy(username, password)
-
-        # Create a new tab for the course list
-        self.tab_widget.addTab(QLabel(course_list), "Course List")
-
-
-def scrappy(username, password):
-    # Import the necessary modules
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from bs4 import BeautifulSoup
-    import time
-
-    # Create a webdriver object and set the desired options
-    driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
+# Import the necessary modules
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+import time
+ 
+def login(driver, username, password):
     # Wait for up to 10 seconds for elements to become available
     driver.implicitly_wait(10)
 
@@ -87,6 +36,9 @@ def scrappy(username, password):
     cookies_button = driver.find_element(By.ID, "agree_button")
     cookies_button.click()
 
+
+# Create afunction to scrape the grades page
+def scrape_courses(driver):
     # Get the HTML source code of the page
     html = driver.page_source
 
@@ -116,17 +68,71 @@ def scrappy(username, password):
         # Add the course name to the list of courses
         courses.append(course_name)
 
+    for course in courses:
+        print(course)
+
+    return courses
+
+def scrape_grades(driver):
+    
+    # Get the HTML source code of the page
+    html = driver.page_source
+
+    # Parse the HTML code using BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Find the unordered list with the class "portletList"
+    ul_element = soup.find("ul", class_="portletList")
+
+    # Find the list item element that contains the "My Grades" link
+    li_element = ul_element.find("a", text="My Grades")
+
+    # Get the href attribute of the anchor element, which is the URL of the "My Grades" page
+    my_grades_url = li_element["href"]
+
+    # Append the base URL to the relative URL
+    my_grades_url = "https://kettering.blackboard.com" + my_grades_url
+
+    # Navigate to the "My Grades" page
+    driver.get(my_grades_url)
 
 
+    # Get the HTML source code of the page
+    html = driver.page_source
 
-    # Wait here for further instructions
-    time.sleep(100)
+    # Parse the HTML code using BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+
+    # wait for the page to load
+    time.sleep(5)
+    # Find your grades by looking for the div with the id "grades_wrapper" 
+    grades = soup.find(id="grades_wrapper")
+    
+    print("Pause")
 
 
-app = QApplication([])
-login_window = App()
-login_window.show()
-app.exec_()
+    
 
+# Create a main function
+def main():
 
+    # Create a new instance of the Chrome driver
+    driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
+
+    # Login to Blackboard
+    
+
+    # Scrape courses
+    courses = scrape_courses(driver)
+
+    # Scrape grades
+    scrape_grades(driver)
+
+    print("Pause")
+
+    # end main function
+
+# Call the main function
+if __name__ == "__main__":
+    main()
 
