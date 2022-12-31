@@ -37,7 +37,7 @@ def login(driver, username, password):
     # Wait for the redirect to occur
     cookies_button = driver.find_element(By.ID, "agree_button")
     cookies_button.click()
-
+ 
 
 # Create afunction to scrape the grades page
 def scrape_courses(driver):
@@ -47,8 +47,8 @@ def scrape_courses(driver):
     # Parse the HTML code using BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
 
-    # Select the div element with the id "_4_1termCourses__208_1"
-    div_element = soup.find(id="_4_1termCourses__208_1")
+    # Select the div element with the id "$fixedId"
+    div_element = soup.find("div", id="div_4_1")
 
     # Select the unordered list inside the div element
     ul_element = div_element.ul
@@ -126,6 +126,7 @@ def go_to_grades(driver):
     # Return the driver
     return soup
 
+
 def scrape_grades(soup):
     # Find the div id left_stream_mygrades
     parent_div = soup.find("div", id="left_stream_mygrades")
@@ -135,8 +136,7 @@ def scrape_grades(soup):
 
     # Print the bb:rhs attribute of each div
     for div in divs:
-      print(div['bb:rhs'])
-
+        print(div['bb:rhs'])
 
 
 # Create a main function
@@ -144,6 +144,7 @@ def main():
 
     # Create a new instance of the Chrome driver
     driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
+
 
 
     # Scrape courses

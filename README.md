@@ -3,3 +3,11 @@ The Blackboard Scrapper is a tool for students to easily archive and track their
 
 
 This web scraper is specifically designed for kettering University students to extract their course information from the Blackboard login page. It uses the Selenium webdriver and Python to automate the login process and extract the necessary data. Please note that this tool is only intended for use by Kettering University students. I apologize for any inconvenience this may cause to users from other institutions.
+
+
+# TODO 
+
+Get Grades First
+
+Fix Login to make it more universal 
+
