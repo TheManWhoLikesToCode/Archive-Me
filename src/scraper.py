@@ -1,9 +1,11 @@
 # Import the necessary modules
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import time
- 
+
+
 def login(driver, username, password):
     # Wait for up to 10 seconds for elements to become available
     driver.implicitly_wait(10)
@@ -73,8 +75,9 @@ def scrape_courses(driver):
 
     return courses
 
-def scrape_grades(driver):
-    
+
+def go_to_grades(driver):
+
     # Get the HTML source code of the page
     html = driver.page_source
 
@@ -96,6 +99,23 @@ def scrape_grades(driver):
     # Navigate to the "My Grades" page
     driver.get(my_grades_url)
 
+    # Get the HTML source code of the page using the my grades URL
+    html = driver.page_source
+
+    # Parse the HTML code using BeautifulSoup
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Find the iframe element
+    iframe = soup.find('iframe', {'class': 'cloud-iframe', 'id': 'mybbCanvas'})
+
+    # Get the src attribute of the iframe
+    iframe_src = iframe['src']
+
+    # Append the base URL to the relative URL
+    iframe_src = "https://kettering.blackboard.com" + iframe_src
+
+    # go to the iframe
+    driver.get(iframe_src)
 
     # Get the HTML source code of the page
     html = driver.page_source
@@ -103,15 +123,21 @@ def scrape_grades(driver):
     # Parse the HTML code using BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
 
-    # wait for the page to load
-    time.sleep(5)
-    # Find your grades by looking for the div with the id "grades_wrapper" 
-    grades = soup.find(id="grades_wrapper")
-    
-    print("Pause")
+    # Return the driver
+    return soup
+
+def scrape_grades(soup):
+    # Find the div id left_stream_mygrades
+    parent_div = soup.find("div", id="left_stream_mygrades")
+
+    # Find all div elements under the left_stream_mygrades
+    divs = parent_div.find_all("div")
+
+    # Print the bb:rhs attribute of each div
+    for div in divs:
+      print(div['bb:rhs'])
 
 
-    
 
 # Create a main function
 def main():
@@ -119,20 +145,21 @@ def main():
     # Create a new instance of the Chrome driver
     driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
 
-    # Login to Blackboard
-    
 
     # Scrape courses
     courses = scrape_courses(driver)
 
-    # Scrape grades
-    scrape_grades(driver)
+    # Go to the grades page
+    grades_page = go_to_grades(driver)
+
+    # scrape the grades page
+    scrape_grades(grades_page)
 
     print("Pause")
 
     # end main function
 
+
 # Call the main function
 if __name__ == "__main__":
     main()
-
