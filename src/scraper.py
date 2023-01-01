@@ -39,7 +39,7 @@ def login(driver, username, password):
     cookies_button.click()
 
 
-def scrapper(driver):
+def get_course_href(driver):
 
     # Get the HTML source code of the page
     html = driver.page_source
@@ -60,7 +60,7 @@ def scrapper(driver):
     grade_rows.pop(0)
 
     # Make a dictionary to store the grades
-    grades = {}
+    course_href = {}
 
     # Iterate over the rows and get the href attribute of the anchor element
     for row in grade_rows:
@@ -74,10 +74,10 @@ def scrapper(driver):
         td_element[1] = td_element[1].a["href"]
 
         # add it to the dictionary
-        grades[td_element[0]] = td_element[1]
+        course_href[td_element[0]] = td_element[1]
 
     # Return the driver
-    return grades
+    return course_href
 
 
 def scrape_grades(soup):
@@ -96,41 +96,44 @@ def scrape_grades(soup):
 
     # Iterate over the rows
     for row in div_rows:
-        # Find the class cell gradable
-        class_cell = row.find('div', {'class': 'cell gradable'})
-        # Get the a tag from the class cell
-        a_tag = class_cell.find('a')
-        # Get the text from the a tag
-        assignment_name = a_tag.text
-        # Find the cell grade div
-        grade_cell = row.find('div', {'class': 'cell grade'})
-        # Find the class grade in the cell grade div
-        grade = grade_cell.find('span', {'class': 'grade'})
-        # Get the text from the grade
-        grade = grade.text
+        try:
+            # Find the class cell gradable
+            class_cell = row.find('div', {'class': 'cell gradable'})
+            # Get the a tag from the class cell
+            a_tag = class_cell.find('a')
+            # Get the text from the a tag
+            assignment_name = a_tag.text
+            # Find the cell grade div
+            grade_cell = row.find('div', {'class': 'cell grade'})
+            # Find the class grade in the cell grade div
+            grade = grade_cell.find('span', {'class': 'grade'})
+            # Get the text from the grade
+            grade = grade.text
 
-        # If the grade is not a number
-        if not grade.isnumeric():
-            # If grade is not a number then it is a letter grade and return the letter grade
+            if not grade.replace('.','').isdigit():
+                # If grade is not a number then it is a letter grade and return the letter grade
+                # Add the class name and grade to the dictionary
+                grades[assignment_name] = grade
+                # Continue to the next iteration
+                continue
+
+            # Find the pointsPossible clearfloats
+            points_possible = row.find(
+                'span', {'class': 'pointsPossible clearfloats'})
+            # Get the text from the points possible
+            points_possible = points_possible.text
+
+            # Remove the / from the points possible
+            points_possible = points_possible.replace("/", "")
+
+            # Divide points by points possible
+            grade = float(grade) / float(points_possible)
+
             # Add the class name and grade to the dictionary
             grades[assignment_name] = grade
-            # Continue to the next iteration
-            continue
-
-        # Find the pointsPossible clearfloats
-        points_possible = row.find(
-            'span', {'class': 'pointsPossible clearfloats'})
-        # Get the text from the points possible
-        points_possible = points_possible.text
-
-        # Remove the / from the points possible
-        points_possible = points_possible.replace("/", "")
-
-        # Divide points by points possible
-        grade = int(grade) / int(points_possible)
-
-        # Add the class name and grade to the dictionary
-        grades[assignment_name] = grade
+        except Exception as e:
+            # Handle the exception here
+            print(e)
 
     return grades
 
@@ -143,7 +146,7 @@ def main():
 
 
     # Go to the grades page
-    Course_Href = scrapper(driver)
+    Course_Href = get_course_href(driver)
 
     # Print courses
     for course in Course_Href:
@@ -164,13 +167,18 @@ def main():
         html = driver.page_source
         # Parse the HTML code using BeautifulSoup
         soup = BeautifulSoup(html, "html.parser")
+        # Get the div id courseMenuPalette_paletteTitleHeading
+        course_name = soup.find(
+            "div", id="courseMenuPalette_paletteTitleHeading")
+        # Get the text from the course name
+        course_name = course_name.text
         # Create a dic to store the grades
         grades = {}
         # call the scrape grades function
         grades = scrape_grades(soup)
 
-        # Add the grades to the all_grades dictionary
-        all_grades.update(grades)
+        # Add to the course_href dictionary
+        all_grades[course_name] = grades
 
     print("Pause")
 
