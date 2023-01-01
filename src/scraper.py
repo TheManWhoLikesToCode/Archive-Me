@@ -3,7 +3,16 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-import time
+from selenium.webdriver.chrome.options import Options
+
+# Create an instance of ChromeOptions
+chrome_options = Options()
+
+# Add the headless flag
+chrome_options.add_argument("--headless")
+
+# Create a Chrome webdriver instance
+driver = webdriver.Chrome(chrome_options=chrome_options)
 
 
 def login(driver, username, password):
@@ -99,11 +108,10 @@ def scrape_grades(soup):
         try:
             # Find the class cell gradable
             class_cell = row.find('div', {'class': 'cell gradable'})
-            assignment_name = class_cell.text
-            # Filter out /n and /t
-            assignment_name = assignment_name.replace("\n", "")
-            assignment_name = assignment_name.replace("\t", "")
-            
+            # Find all elements under the class cell gradable
+            divs = class_cell.find_all()
+            # Get the text from the first div
+            assignment_name = divs[0].text
 
             # Find the cell grade div
             grade_cell = row.find('div', {'class': 'cell grade'})
@@ -140,13 +148,51 @@ def scrape_grades(soup):
     return grades
 
 
+def generate_html(grades):
+    # Create an empty string to store the HTML code
+    html_code = ""
+
+    # Add the HTML header and title
+    html_code += "<html>\n"
+    html_code += "<head>\n"
+    html_code += "<title>Grades</title>\n"
+    html_code += "</head>\n"
+
+    # Add the body of the HTML page
+    html_code += "<body>\n"
+
+    # Add a heading
+    html_code += "<h1>Grades</h1>\n"
+
+    # Add a table to display the grades
+    html_code += "<table>\n"
+
+    # Add a table row for each course
+    for course, grade in grades.items():
+        html_code += "<tr>\n"
+        html_code += "<td>{}</td>\n".format(course)
+        html_code += "<td>{}</td>\n".format(grade)
+        html_code += "</tr>\n"
+
+    # Close the table
+    html_code += "</table>\n"
+
+    # Close the body and HTML tags
+    html_code += "</body>\n"
+    html_code += "</html>\n"
+
+    # Save the HTML code to a file
+    with open("grades.html", "w") as f:
+        f.write(html_code)
+
+
 # Create a main function
 def main():
 
     # Create a new instance of the Chrome driver
     driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
 
-
+   
 
     # Go to the grades page
     Course_Href = get_course_href(driver)
@@ -178,30 +224,11 @@ def main():
 
         # Add to the course_href dictionary
         all_grades[course_name] = grades
-
-    # Create a matrix to store the grades and convert the dictionary to a matrix
-    grades_matrix = []
-
-    # Iterate over the dictionary
-    for course_name, grades in all_grades.items():
-        # Create a list to store the grades
-        grades_list = []
-        # Append the course name to the list
-        grades_list.append(course_name)
-        # Iterate over the grades
-        for assignment_name, grade in grades.items():
-            # Append the assignment name and grade to the list
-            grades_list.append(assignment_name)
-            grades_list.append(grade)
-        # Append the list to the matrix
-        grades_matrix.append(grades_list)
     
-    # print the matrix
-    print(grades_matrix)
+    # Generate the HTML file
+    generate_html(all_grades)
 
     print("Done")
-
-
 
 
 # Call the main function
