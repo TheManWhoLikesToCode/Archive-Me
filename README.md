@@ -7,5 +7,4 @@ This web scraper is specifically designed for kettering University students to e
 
 # TODO 
 
-Scrape Courses
-Add grade monitoring feature
+Scrape Courses & add grade monitoring feature
