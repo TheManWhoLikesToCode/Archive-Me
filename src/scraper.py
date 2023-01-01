@@ -99,10 +99,12 @@ def scrape_grades(soup):
         try:
             # Find the class cell gradable
             class_cell = row.find('div', {'class': 'cell gradable'})
-            # Get the a tag from the class cell
-            a_tag = class_cell.find('a')
-            # Get the text from the a tag
-            assignment_name = a_tag.text
+            assignment_name = class_cell.text
+            # Filter out /n and /t
+            assignment_name = assignment_name.replace("\n", "")
+            assignment_name = assignment_name.replace("\t", "")
+            
+
             # Find the cell grade div
             grade_cell = row.find('div', {'class': 'cell grade'})
             # Find the class grade in the cell grade div
@@ -110,7 +112,7 @@ def scrape_grades(soup):
             # Get the text from the grade
             grade = grade.text
 
-            if not grade.replace('.','').isdigit():
+            if not grade.replace('.', '').isdigit():
                 # If grade is not a number then it is a letter grade and return the letter grade
                 # Add the class name and grade to the dictionary
                 grades[assignment_name] = grade
@@ -132,8 +134,8 @@ def scrape_grades(soup):
             # Add the class name and grade to the dictionary
             grades[assignment_name] = grade
         except Exception as e:
-            # Handle the exception here
-            print(e)
+            # Do nothing
+            pass
 
     return grades
 
@@ -145,12 +147,9 @@ def main():
     driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
 
 
+
     # Go to the grades page
     Course_Href = get_course_href(driver)
-
-    # Print courses
-    for course in Course_Href:
-        print(course)
 
     # Create a dictionary to store the grades
     all_grades = {}
@@ -180,9 +179,29 @@ def main():
         # Add to the course_href dictionary
         all_grades[course_name] = grades
 
-    print("Pause")
+    # Create a matrix to store the grades and convert the dictionary to a matrix
+    grades_matrix = []
 
-    # end main function
+    # Iterate over the dictionary
+    for course_name, grades in all_grades.items():
+        # Create a list to store the grades
+        grades_list = []
+        # Append the course name to the list
+        grades_list.append(course_name)
+        # Iterate over the grades
+        for assignment_name, grade in grades.items():
+            # Append the assignment name and grade to the list
+            grades_list.append(assignment_name)
+            grades_list.append(grade)
+        # Append the list to the matrix
+        grades_matrix.append(grades_list)
+    
+    # print the matrix
+    print(grades_matrix)
+
+    print("Done")
+
+
 
 
 # Call the main function
