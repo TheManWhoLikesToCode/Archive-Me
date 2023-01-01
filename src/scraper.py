@@ -5,15 +5,6 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.options import Options
 
-# Create an instance of ChromeOptions
-chrome_options = Options()
-
-# Add the headless flag
-chrome_options.add_argument("--headless")
-
-# Create a Chrome webdriver instance
-driver = webdriver.Chrome(chrome_options=chrome_options)
-
 
 def login(driver, username, password):
     # Wait for up to 10 seconds for elements to become available
@@ -90,9 +81,8 @@ def get_course_href(driver):
 
 
 def scrape_grades(soup):
-
-    # Create a dictionary to store the grades
-    grades = {}
+    # Create a matrix to store the course names, assignment names, and grades
+    grades_matrix = []
 
     # Find the div that contains the grades
     div_element = soup.find(
@@ -102,6 +92,12 @@ def scrape_grades(soup):
 
     # Find every div with the role row
     div_rows = grades_wrapper.find_all('div', {'role': 'row'})
+
+    # Get the course name from the soup object
+    course_name_div = soup.find('div', {'class': 'navPaletteTitle'})
+
+    # Get the course name from the div
+    course_name = course_name_div.text
 
     # Iterate over the rows
     for row in div_rows:
@@ -117,35 +113,15 @@ def scrape_grades(soup):
             grade_cell = row.find('div', {'class': 'cell grade'})
             # Find the class grade in the cell grade div
             grade = grade_cell.find('span', {'class': 'grade'})
-            # Get the text from the grade
-            grade = grade.text
+            # Get the text of the grade span
+            grade_text = grade.text
 
-            if not grade.replace('.', '').isdigit():
-                # If grade is not a number then it is a letter grade and return the letter grade
-                # Add the class name and grade to the dictionary
-                grades[assignment_name] = grade
-                # Continue to the next iteration
-                continue
-
-            # Find the pointsPossible clearfloats
-            points_possible = row.find(
-                'span', {'class': 'pointsPossible clearfloats'})
-            # Get the text from the points possible
-            points_possible = points_possible.text
-
-            # Remove the / from the points possible
-            points_possible = points_possible.replace("/", "")
-
-            # Divide points by points possible
-            grade = float(grade) / float(points_possible)
-
-            # Add the class name and grade to the dictionary
-            grades[assignment_name] = grade
-        except Exception as e:
-            # Do nothing
+            # Append the course name, assignment name, and grade to the matrix
+            grades_matrix.append([assignment_name, grade_text])
+        except:
             pass
 
-    return grades
+    return grades_matrix
 
 
 def generate_html(grades):
@@ -167,15 +143,29 @@ def generate_html(grades):
     # Add a table to display the grades
     html_code += "<table>\n"
 
-    # Add a table row for each course
-    for course, grade in grades.items():
-        html_code += "<tr>\n"
-        html_code += "<td>{}</td>\n".format(course)
-        html_code += "<td>{}</td>\n".format(grade)
-        html_code += "</tr>\n"
+    # Add a list item for each course
+    for course, grades_list in grades.items():
+        # Make the course a header
+        html_code += "<h3>{}</h3>\n".format(course)
 
-    # Close the table
-    html_code += "</table>\n"
+        # Add an inner unordered list to display the grades for the course
+        html_code += "<ul>\n"
+
+        # Add a list item for each grade
+        for grade in grades_list:
+            # Remove the brackets and single quotes from the grade
+            grade = str(grade).strip("[]")
+            html_code += "<li>{}</li>\n".format(grade)
+
+        # Close the inner unordered list
+        html_code += "</ul>\n"
+
+        # Close the list item
+        html_code += "</li>\n"
+
+
+    # Close the outer unordered list
+    html_code += "</ul>\n"
 
     # Close the body and HTML tags
     html_code += "</body>\n"
@@ -187,12 +177,13 @@ def generate_html(grades):
 
 
 # Create a main function
-def main():
+def scrapper(username, password):
 
     # Create a new instance of the Chrome driver
     driver = webdriver.Chrome(executable_path="/path/to/chromedriver")
 
-   
+    #login to blackboard
+    login(driver, username, password)
 
     # Go to the grades page
     Course_Href = get_course_href(driver)
@@ -228,9 +219,6 @@ def main():
     # Generate the HTML file
     generate_html(all_grades)
 
-    print("Done")
 
 
-# Call the main function
-if __name__ == "__main__":
-    main()
+
