@@ -1,11 +1,11 @@
 # Import the necessary modules
+import mimetypes
 import requests
-from selenium.webdriver import WebDriver
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import os
 import re
-
 
 
 def log_into_blackboard(driver, username, password):
@@ -359,10 +359,11 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
             content_links.clear()
 
 
+
     
 #* Function To Download All Files From Blackboard 
-scrape_content_from_blackboard("username", "password")
+scrape_content_from_blackboard(username, password)
 
 #* Function To Get Grades From Blackboard
-scrape_grades_from_blackboard("username", "password")
+scrape_grades_from_blackboard(username, password)
 
