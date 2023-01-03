@@ -1,9 +1,12 @@
 # Import the necessary modules
+import time
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-from selenium.webdriver.chrome.options import Options
+import os
+import re
+import traceback
 
 
 def log_into_blackboard(driver, username, password):
@@ -17,22 +20,20 @@ def log_into_blackboard(driver, username, password):
     while driver.current_url == "https://blackboard.kettering.edu/":
         pass
 
-    # Find the username field
+    # Find the login form
     login_form = driver.find_element(By.ID, "loginForm")
 
-    # Find the username and password fields
+    # Find the username, password, and login button fields
     username_field = login_form.find_element(By.ID, "inputUserID")
-
     password_field = login_form.find_element(By.ID, "inputPassword")
+    login_button = login_form.find_element(By.ID, "sign-button")
 
     # Enter the username and password
     username_field.send_keys(username)
     password_field.send_keys(password)
 
-    # Find the login button and click it
-    login_button = login_form.find_element(By.ID, "sign-button")
-    # Click the login button
-    login_button.click()
+    # Click the login button using JavaScript
+    driver.execute_script("arguments[0].click();", login_button)
 
     # Wait for the redirect to occur
     cookies_button = driver.find_element(By.ID, "agree_button")
@@ -79,7 +80,6 @@ def get_grades_page_links(driver):
     return grades_page_links
 
 
-
 def extract_grades(soup):
     # Create a matrix to store the assignment names and grades
     grades = []
@@ -117,7 +117,6 @@ def extract_grades(soup):
             pass
 
     return grades
-
 
 
 def generate_html(grades):
@@ -159,7 +158,6 @@ def generate_html(grades):
         # Close the list item
         html_code += "</li>\n"
 
-
     # Close the outer unordered list
     html_code += "</ul>\n"
 
@@ -172,10 +170,11 @@ def generate_html(grades):
         f.write(html_code)
 
 
+
 def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
     # Create a new Chrome session
     driver = webdriver.Chrome()
-    #login to blackboard
+    # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
 
     # Go to the grades page and get a list of course hrefs
@@ -208,29 +207,39 @@ def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
 
         # Add to the all_grades dictionary
         all_grades[course_name] = grades
-    
+
     # Generate the HTML file
     generate_html(all_grades)
+    # Close the browser
+    driver.close()
 
 
 def scrape_content_from_blackboard(blackboard_username, blackboard_password):
     # Create a new Chrome session
     driver = webdriver.Chrome()
-    #login to blackboard
+    # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
     # Get the html source code
     html = driver.page_source
     # Parse the HTML code using BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
-    # Get the div id div_4_1
-    div_4_1 = soup.find("div", id="div_4_1")
-    # select the second div element
-    courses_where_you_are_a_student = div_4_1.find_all("div")[1]
-    # Select the first ul element
-    courses = courses_where_you_are_a_student.find_all("ul")[0]
+
+    content_links = {}
+
+    # Add try-except block
+    try:
+        # Get the div id div_4_1
+        div_4_1 = soup.find("div", id="div_4_1")
+        # Get the ul element
+        courses = div_4_1.find_all("ul")[0]
+
+    except Exception as e:
+        print(e)
+        return
+
     # Create a dictionary to store the hrefs
     hrefs = {}
-    # for each li element in the courses get the href 
+    # for each li element in the courses get the href
     for course in courses.find_all("li"):
         # Get the href
         href = course.find("a")["href"]
@@ -244,6 +253,9 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
 
     # Visit each course
     for course, href in hrefs.items():
+        # Course name = course minus \n
+        course_name = course.strip("\n")
+        course_name = re.sub(r'[\\/:*?"<>|]', '', course_name)
         # Append the href to the base url
         full_url = "https://kettering.blackboard.com" + href
         # Scrape the href
@@ -264,38 +276,75 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
         menuWrap = soup.find("div", id="menuWrap")
         # get the class courseMenu
         course_menu = menuWrap.find("ul", class_="courseMenu")
+        # Create a folder for the course if it doesn't already exist
+        if not os.path.exists(course_name):
+            os.makedirs(course_name)
 
         # for each li element in the course menu
         for li in course_menu.find_all("li"):
-            # Get the href
-            href = li.find("a")["href"]
+            # Try to get the href if it doesn't exist, skip it
+            try:
+                # Get the href
+                href = li.find("a")["href"]
+            except:
+                continue
+
+            # if href isn't a relative url, skip it
+            if href[0] != "/":
+                continue
             # Append the href to the base url
             full_url = "https://kettering.blackboard.com" + href
             # Scrape the href
             driver.get(full_url)
             # Wait for the page to load
             driver.implicitly_wait(10)
+            # Soup ts
+            current_page = BeautifulSoup(driver.page_source, "html.parser")
 
-        try:
-            # Find the div content_listContainer
-            content_listContainer = soup.find("div", class_="content_listContainer")
-            # For each of the listed items in the content_listContainer
-            for item in content_listContainer.find_all("li"):
+            # Find the all the ul elements
+            content_listContainer = current_page.find(
+                'ul', {'id': 'content_listContainer', 'class': 'contentListPlain'})
+
+            # If none, skip it
+            if content_listContainer is None:
+                continue
+
+            # Find all of the li elements
+            content_listContainer = content_listContainer.find_all('li')
+            # For each li element look for the ul class attachments clearfix
+            for li in content_listContainer:
+                # Find the ul element
+                attachments_ul = li.find(
+                    'ul', {'class': 'attachments clearfix'})
+                # if none, skip it
+                if attachments_ul is None:
+                    continue
+                # Find the a element
+                attachments_a = attachments_ul.find('a')
                 # Get the href
-                href = item.find("a")["href"]
+                href = attachments_a['href']
                 # Append the href to the base url
                 full_url = "https://kettering.blackboard.com" + href
-                # Scrape the href
-            driver.get(full_url)
-        except Exception as e:
-            # If there is an exception, print the error message
-            print(e)
+                # Save the full url
+                driver.get(full_url)
+                # Wait for the page to load
+                driver.implicitly_wait(10)
+                # get the website url
+                url = driver.current_url
+                # store this in content_links
+                content_links[li.text] = url
+            # For each content link
+            for content_name, content_url in content_links.items():
+                # Download the file
+                print(content_name, content_url)
+                # Remove the content from the content links
+                del content_links[content_name]
+    # Return the content links
+    return content_links
+               
 
-        
 
 
-        
 
-    print("Pause")
 
-    # Login to the blackboard
+ 
