@@ -49,7 +49,7 @@ scrape_grades_from_blackboard("username", "password")
 ## Screenshots
 
 TODO
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+![App Screenshot](https://github.com/TheManWhoLikesToCode/Blackboard-Scrapper/blob/main/docs/Grade%20Display%20Page.PNG)
 
 
 ## Authors
