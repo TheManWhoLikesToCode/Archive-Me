@@ -1,4 +1,5 @@
 # Import the necessary modules
+import mimetypes
 import time
 import requests
 from selenium import webdriver
@@ -170,7 +171,6 @@ def generate_html(grades):
         f.write(html_code)
 
 
-
 def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
     # Create a new Chrome session
     driver = webdriver.Chrome()
@@ -276,9 +276,6 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
         menuWrap = soup.find("div", id="menuWrap")
         # get the class courseMenu
         course_menu = menuWrap.find("ul", class_="courseMenu")
-        # Create a folder for the course if it doesn't already exist
-        if not os.path.exists(course_name):
-            os.makedirs(course_name)
 
         # for each li element in the course menu
         for li in course_menu.find_all("li"):
@@ -313,6 +310,19 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
             content_listContainer = content_listContainer.find_all('li')
             # For each li element look for the ul class attachments clearfix
             for li in content_listContainer:
+                # Assigment Name
+                assignment_name = li.text
+                # Remove \n
+                assignment_name = assignment_name.strip("\n")
+                # Remove everything after the first \n
+                assignment_name = assignment_name.split("\n")[0]
+                # Remove all special characters
+                assignment_name = re.sub(r'[\\/:*?"<>|]', '_', assignment_name)
+
+                # If the assignment name is give it a default name
+                if assignment_name == "":
+                    assignment_name = "Untitled"
+
                 # Find the ul element
                 attachments_ul = li.find(
                     'ul', {'class': 'attachments clearfix'})
@@ -332,19 +342,23 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
                 # get the website url
                 url = driver.current_url
                 # store this in content_links
-                content_links[li.text] = url
-            # For each content link
-            for content_name, content_url in content_links.items():
+                content_links[assignment_name] = url
+
+            for assignment_name, url in content_links.items():
+                # Check if the directory exists
+                if not os.path.exists(course_name):
+                    # Create the directory
+                    os.makedirs(course_name)
                 # Download the file
-                print(content_name, content_url)
-                # Remove the content from the content links
-                del content_links[content_name]
-    # Return the content links
-    return content_links
-               
+                response = requests.get(url)
+                content_type = response.headers.get("Content-Type")
+                extension = mimetypes.guess_extension(content_type)
+                # Open a file with the assignment name and extension
+                with open(f"{course_name}/{assignment_name}{extension}", "wb") as f:
+                    # Write the file to the specified directory
+                    f.write(response.content)
+            # Clear the content_links for the next course
+            content_links.clear()
 
 
 
-
-
- 
