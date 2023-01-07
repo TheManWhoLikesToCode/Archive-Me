@@ -321,16 +321,16 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
                 if assignment_name == "":
                     assignment_name = "Untitled"
 
-                # Find the ul element
-                attachments_ul = li.find(
-                    'ul', {'class': 'attachments clearfix'})
-                # if none, skip it
-                if attachments_ul is None:
+                # Select the a element
+                a = li.select_one('a')
+                # if a is None, skip it
+                if a is None:
                     continue
-                # Find the a element
-                attachments_a = attachments_ul.find('a')
-                # Get the href
-                href = attachments_a['href']
+                # Get the href attribute
+                href = a['href']
+                # If the href is a full url, skip it
+                if href[0] == "h":
+                    continue
                 # Append the href to the base url
                 full_url = "https://kettering.blackboard.com" + href
                 # Save the full url
@@ -342,6 +342,7 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
                 # store this in content_links
                 content_links[assignment_name] = url
 
+            # Iterate through the content_links and download and save the files
             for assignment_name, url in content_links.items():
                 # Check if the directory exists
                 if not os.path.exists(course_name):
@@ -349,21 +350,18 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
                     os.makedirs(course_name)
                 # Download the file
                 response = requests.get(url)
-                content_type = response.headers.get("Content-Type")
-                extension = mimetypes.guess_extension(content_type)
-                # Open a file with the assignment name and extension
-                with open(f"{course_name}/{assignment_name}{extension}", "wb") as f:
-                    # Write the file to the specified directory
+                # Save the file
+                with open(course_name + "/" + assignment_name, "wb") as f:
                     f.write(response.content)
-            # Clear the content_links for the next course
+                # Clear the content_links
             content_links.clear()
 
 
 
-    
-#* Function To Download All Files From Blackboard 
+
+
+# * Function To Download All Files From Blackboard
 scrape_content_from_blackboard(username, password)
 
-#* Function To Get Grades From Blackboard
+# * Function To Get Grades From Blackboard
 scrape_grades_from_blackboard(username, password)
-
