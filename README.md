@@ -1,6 +1,7 @@
 
 # Blackboard Scrapper
 
+# NOTE: Unfortunately I no longer have access to my Blackboards do development on this project is paused.
 
 The Blackboard Scrapper is a tool for students to easily archive and track their course materials and grades from Blackboard. It helps students store and organize their coursework for long-term access and reference. This scraper is useful for college students preserving their academic record and high schoolers preparing for future studies.-
 
