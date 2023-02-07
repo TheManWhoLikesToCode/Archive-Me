@@ -7,7 +7,17 @@ import os
 import re
 
 
+
+#* Logs a user into the Blackboard website using Selenium WebDriver.
 def log_into_blackboard(driver, username, password):
+
+    """
+    Arguments:
+        driver (webdriver.Firefox, webdriver.Chrome, ...): Selenium WebDriver instance.
+        username (str): User's username.
+        password (str): User's password.
+    """
+
     # Wait for up to 10 seconds for elements to become available
     driver.implicitly_wait(10)
 
@@ -38,7 +48,14 @@ def log_into_blackboard(driver, username, password):
     cookies_button.click()
 
 
+#* Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
 def get_grades_page_links(driver):
+    """
+    Arguments:
+        driver (webdriver.Firefox, webdriver.Chrome, ...): Selenium WebDriver instance.
+    Returns:
+        dict: A dictionary mapping course names to their corresponding grades page links.
+    """
     # Get the HTML source code of the page
     html = driver.page_source
 
@@ -78,7 +95,14 @@ def get_grades_page_links(driver):
     return grades_page_links
 
 
+#* Extracts the grades for all the assignments in a course from the course grades page on the Blackboard website.
 def extract_grades(soup):
+    """
+    Arguments:
+        soup (BeautifulSoup object): BeautifulSoup object of the course grades page.
+    Returns:
+        list: A list of lists containing the assignment names and their corresponding grades.
+    """
     # Create a matrix to store the assignment names and grades
     grades = []
 
@@ -116,8 +140,19 @@ def extract_grades(soup):
 
     return grades
 
-
+#* Generates an HTML file displaying the grades.
 def generate_html(grades):
+    """
+    Args:
+        grades (dict): A dictionary where each key is the name of a course, 
+        and each value is a list of grades for that course.
+        
+    Returns:
+        None
+
+    Note: 
+        Creates a html file
+    """
     # Create an empty string to store the HTML code
     html_code = ""
 
@@ -167,8 +202,17 @@ def generate_html(grades):
     with open("grades.html", "w") as f:
         f.write(html_code)
 
-
+#* This function scrapes the grades from Blackboard for a given username and password.
 def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
+    """
+    Args:
+        blackboard_username (str): The username for the Blackboard account
+        blackboard_password (str): The password for the Blackboard account
+    Returns:
+        None
+    Notes: 
+        passes all_grades to generate html
+    """
     # Create a new Chrome session
     driver = webdriver.Chrome(executable_path='support/chromedriver_mac64/chromedriver')
 
@@ -211,8 +255,16 @@ def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
     # Close the browser
     driver.close()
 
-
+#* This function scrapes the content from the blackboard website by logging in to the blackboard website, accessing the courses and content, 
+#* and extracting the course and assignment names and URLs. 
 def scrape_content_from_blackboard(blackboard_username, blackboard_password):
+    """
+    Arguments:
+    blackboard_username - str: The username for the blackboard account.
+    blackboard_password - str: The password for the blackboard account.
+    
+    Returns: None
+    """
     # Create a new Chrome session
     driver = webdriver.Chrome(executable_path='support/chromedriver_mac64/chromedriver')
 
