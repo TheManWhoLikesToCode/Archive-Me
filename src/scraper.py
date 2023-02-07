@@ -1,5 +1,4 @@
 # Import the necessary modules
-import mimetypes
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -171,7 +170,8 @@ def generate_html(grades):
 
 def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
     # Create a new Chrome session
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(executable_path='support/chromedriver_mac64/chromedriver')
+
     # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
 
@@ -214,7 +214,8 @@ def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
 
 def scrape_content_from_blackboard(blackboard_username, blackboard_password):
     # Create a new Chrome session
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(executable_path='support/chromedriver_mac64/chromedriver')
+
     # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
     # Get the html source code
@@ -356,8 +357,7 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
                 # Clear the content_links
             content_links.clear()
 
-
-
+# Usage Example
 
 
 # * Function To Download All Files From Blackboard
