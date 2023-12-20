@@ -1,9 +1,9 @@
 
-# Blackboard Scrapper
+# Blackboard Scraper
 
 # NOTE: Unfortunately I no longer have access to Blackboard so development on this project is paused.
 
-The Blackboard Scrapper is a tool for students to easily archive and track their course materials and grades from Blackboard. It helps students store and organize their coursework for long-term access and reference. This scraper is useful for college students preserving their academic record and high schoolers preparing for future studies.-
+The Blackboard scraper is a tool for students to easily archive and track their course materials and grades from Blackboard. It helps students store and organize their coursework for long-term access and reference. This scraper is useful for college students preserving their academic record and high schoolers preparing for future studies.-
 
 This web scraper is specifically designed for kettering University students to extract their course information from the Blackboard login page. It uses the Selenium webdriver and Python to automate the login process and extract the necessary data. Please note that this tool is only intended for use by Kettering University students. I apologize for any inconvenience this may cause to users from other institutions.
 ## Features
@@ -47,7 +47,7 @@ scrape_grades_from_blackboard("username", "password")
 
 
 ## Screenshots
-![App Screenshot](https://github.com/TheManWhoLikesToCode/Blackboard-Scrapper/blob/main/docs/Grade%20Display%20Page.PNG)
+![App Screenshot](https://github.com/TheManWhoLikesToCode/Blackboard-scraper/blob/main/docs/Grade%20Display%20Page.PNG)
 
 
 ## Authors
@@ -55,5 +55,5 @@ scrape_grades_from_blackboard("username", "password")
 - [@TheManWhoLikesToCode](https://github.com/TheManWhoLikesToCode)
 
 ## Description
-Blackboard Scrapper is a Python-based tool specifically designed for Kettering University students to efficiently archive and manage their course materials and grades from Blackboard. By leveraging Selenium for automated login and web navigation, along with Beautiful Soup for parsing web content, it extracts detailed course information and organizes it for easy access and long-term reference. The tool features two main functions; one that downloads all available course content (`scrape_content_from_blackboard`), and another that retrieves grades for each assignment and generates an HTML file for display (`scrape_grades_from_blackboard`). Note: Development on this project is currently paused as I no longer have access to Blackboard.
+Blackboard scraper is a Python-based tool specifically designed for Kettering University students to efficiently archive and manage their course materials and grades from Blackboard. By leveraging Selenium for automated login and web navigation, along with Beautiful Soup for parsing web content, it extracts detailed course information and organizes it for easy access and long-term reference. The tool features two main functions; one that downloads all available course content (`scrape_content_from_blackboard`), and another that retrieves grades for each assignment and generates an HTML file for display (`scrape_grades_from_blackboard`). Note: Development on this project is currently paused as I no longer have access to Blackboard.
 
