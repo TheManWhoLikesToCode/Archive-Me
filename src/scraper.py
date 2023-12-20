@@ -7,7 +7,6 @@ import os
 import re
 
 
-
 #* Logs a user into the Blackboard website using Selenium WebDriver.
 def log_into_blackboard(driver, username, password):
 
@@ -203,7 +202,7 @@ def generate_html(grades):
         f.write(html_code)
 
 #* This function scrapes the grades from Blackboard for a given username and password.
-def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
+def scrape_grades_from_blackboard(driver, blackboard_username, blackboard_password):
     """
     Args:
         blackboard_username (str): The username for the Blackboard account
@@ -213,8 +212,6 @@ def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
     Notes: 
         passes all_grades to generate html
     """
-    # Create a new Chrome session
-    driver = webdriver.Chrome(executable_path='support/chromedriver_mac64/chromedriver')
 
     # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
@@ -257,7 +254,7 @@ def scrape_grades_from_blackboard(blackboard_username, blackboard_password):
 
 #* This function scrapes the content from the blackboard website by logging in to the blackboard website, accessing the courses and content, 
 #* and extracting the course and assignment names and URLs. 
-def scrape_content_from_blackboard(blackboard_username, blackboard_password):
+def scrape_content_from_blackboard(driver, blackboard_username, blackboard_password):
     """
     Arguments:
     blackboard_username - str: The username for the blackboard account.
@@ -265,9 +262,7 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
     
     Returns: None
     """
-    # Create a new Chrome session
-    driver = webdriver.Chrome(executable_path='support/chromedriver_mac64/chromedriver')
-
+    
     # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
     # Get the html source code
@@ -410,10 +405,18 @@ def scrape_content_from_blackboard(blackboard_username, blackboard_password):
             content_links.clear()
 
 # Usage Example
+username = USERNAME
+password = PASSWORD
 
+driver = webdriver.Chrome()
+
+# * Log Into Blackboard
+# log_into_blackboard(driver, username, password)
 
 # * Function To Download All Files From Blackboard
-scrape_content_from_blackboard(username, password)
+scrape_content_from_blackboard(driver, username, password)
 
 # * Function To Get Grades From Blackboard
-scrape_grades_from_blackboard(username, password)
+scrape_grades_from_blackboard(driver, username, password)
+
+
