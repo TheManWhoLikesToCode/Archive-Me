@@ -405,8 +405,8 @@ def scrape_content_from_blackboard(driver, blackboard_username, blackboard_passw
             content_links.clear()
 
 # Usage Example
-username = USERNAME
-password = PASSWORD
+username = "free8864"
+password = "#CFi^F6TTwot2j"
 
 driver = webdriver.Chrome()
 
@@ -414,9 +414,9 @@ driver = webdriver.Chrome()
 # log_into_blackboard(driver, username, password)
 
 # * Function To Download All Files From Blackboard
-scrape_content_from_blackboard(driver, username, password)
+# scrape_content_from_blackboard(driver, username, password)
 
 # * Function To Get Grades From Blackboard
-scrape_grades_from_blackboard(driver, username, password)
+# scrape_grades_from_blackboard(driver, username, password)
 
 
