@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title>Demo - Blackboard Scrapper</title>
+    <link href="https://rsms.me/inter/inter-ui.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css"
+    />
+    <link rel="stylesheet" href="static/default.css" id="theme-color" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <section class="smart-scroll">
+      <div class="container-fluid">
+        <nav class="navbar navbar-expand-md navbar-dark">
+          <a class="navbar-brand heading-black" href="./"
+            ><i class="fa fa-arrow-left"></i
+          ></a>
+        </nav>
+      </div>
+    </section>
+
+    <!-- Demo Content -->
+    <section class="demo-section" style="margin-top: 70px">
+      <div class="container">
+        <h2>Interactive Demo of Blackboard Scrapper</h2>
+        <p>
+          Explore how Blackboard Scrapper works. This demo simulates the core
+          functionalities of the application.
+        </p>
+
+        <!-- Interactive Demo Box -->
+        <div>
+          <h4>Login to Your Account</h4>
+          <!-- Login Form -->
+          <form style="margin-bottom: 20px" onsubmit="DownloadCourses()">
+            <div class="form-group">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <input
+                type="password"
+                class="form-control"
+                placeholder="Password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-success">Login</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-6">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-5 mr-auto">
+            <h5>About Archive Me</h5>
+            <p class="text-muted">
+              This is a demo page for the Blackboard Scrapper tool, designed to
+              help Kettering University students manage their educational
+              resources efficiently.
+            </p>
+            <!-- Social Media Links -->
+          </div>
+          <!-- Other footer content -->
+        </div>
+      </div>
+    </footer>
+
+    <!-- JavaScript Files -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.7.3/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+    <script src="static/scripts.js"></script>
+  </body>
+</html>
+
+<script>
+  function DownloadCourses() {
+    var username = document.getElementById("username").value;
+    var password = document.getElementById("password").value;
+
+    fetch("/scrape", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password,
+      }),
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("Failed to download courses");
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        var fileKey = data.file_key;
+        window.location.href = "/download/" + fileKey;
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+  }
+</script>

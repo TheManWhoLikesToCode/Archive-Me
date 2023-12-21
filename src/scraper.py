@@ -1,15 +1,16 @@
 # Import the necessary modules
+import shutil
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+import zipfile
 import os
 import re
 
 
-#* Logs a user into the Blackboard website using Selenium WebDriver.
+# * Logs a user into the Blackboard website using Selenium WebDriver.
 def log_into_blackboard(driver, username, password):
-
     """
     Arguments:
         driver (webdriver.Firefox, webdriver.Chrome, ...): Selenium WebDriver instance.
@@ -47,7 +48,7 @@ def log_into_blackboard(driver, username, password):
     cookies_button.click()
 
 
-#* Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
+# * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
 def get_grades_page_links(driver):
     """
     Arguments:
@@ -94,7 +95,7 @@ def get_grades_page_links(driver):
     return grades_page_links
 
 
-#* Extracts the grades for all the assignments in a course from the course grades page on the Blackboard website.
+# * Extracts the grades for all the assignments in a course from the course grades page on the Blackboard website.
 def extract_grades(soup):
     """
     Arguments:
@@ -139,13 +140,15 @@ def extract_grades(soup):
 
     return grades
 
-#* Generates an HTML file displaying the grades.
+# * Generates an HTML file displaying the grades.
+
+
 def generate_html(grades):
     """
     Args:
         grades (dict): A dictionary where each key is the name of a course, 
         and each value is a list of grades for that course.
-        
+
     Returns:
         None
 
@@ -201,7 +204,9 @@ def generate_html(grades):
     with open("grades.html", "w") as f:
         f.write(html_code)
 
-#* This function scrapes the grades from Blackboard for a given username and password.
+# * This function scrapes the grades from Blackboard for a given username and password.
+
+
 def scrape_grades_from_blackboard(driver, blackboard_username, blackboard_password):
     """
     Args:
@@ -252,17 +257,19 @@ def scrape_grades_from_blackboard(driver, blackboard_username, blackboard_passwo
     # Close the browser
     driver.close()
 
-#* This function scrapes the content from the blackboard website by logging in to the blackboard website, accessing the courses and content, 
-#* and extracting the course and assignment names and URLs. 
+# * This function scrapes the content from the blackboard website by logging in to the blackboard website, accessing the courses and content,
+# * and extracting the course and assignment names and URLs.
+
+
 def scrape_content_from_blackboard(driver, blackboard_username, blackboard_password):
     """
     Arguments:
     blackboard_username - str: The username for the blackboard account.
     blackboard_password - str: The password for the blackboard account.
-    
+
     Returns: None
     """
-    
+
     # login to blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
     # Get the html source code
@@ -404,6 +411,67 @@ def scrape_content_from_blackboard(driver, blackboard_username, blackboard_passw
                 # Clear the content_links
             content_links.clear()
 
+
+def download_and_zip_content(driver, blackboard_username, blackboard_password):
+    """
+    Scrape the content from Blackboard and zip it.
+
+    Args:
+        driver: Selenium WebDriver instance.
+        blackboard_username (str): The username for the Blackboard account.
+        blackboard_password (str): The password for the Blackboard account.
+
+    Returns:
+        str: The path of the created zip file.
+    """
+
+    # Scrape the content from Blackboard
+    scrape_content_from_blackboard(
+        driver, blackboard_username, blackboard_password)
+
+    zip_file_path = username + '_downloaded_content.zip'
+    with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+        for root, dirs, files in os.walk('.'):
+            for file in files:
+                # Add other file types if needed
+                if file.endswith('.pdf') or file.endswith('.docx'):
+                    zipf.write(os.path.join(root, file))
+
+    # Return the path of the zip file
+    return zip_file_path
+
+
+def clean_up_files():
+    """
+    Deletes the directories and files created during the scraping process, 
+    avoiding duplicates in the 'docs' folder.
+    """
+    # Define the folders to exclude from moving
+    excluded_folders = ['src', 'docs', 'support']
+
+    # Iterate through each item in the current directory
+    for item in os.listdir():
+        # Check if the item is a directory and not in the excluded list
+        if os.path.isdir(item) and item not in excluded_folders:
+            # Construct the new path inside the 'docs' folder
+            new_path = os.path.join('docs', item)
+
+            # Check for duplicates
+            if not os.path.exists(new_path):
+                # Move the folder to the new path
+                shutil.move(item, new_path)
+            else:
+                print(f"Duplicate found, not moving {item}")
+
+    print("Folders moved to 'docs' successfully.")
+
+    # Delete the zip file if it exists
+    if os.path.exists('downloaded_content.zip'):
+        os.remove('downloaded_content.zip')
+
+    print("Clean-up completed.")
+
+
 # Usage Example
 username = "free8864"
 password = "#CFi^F6TTwot2j"
@@ -419,4 +487,11 @@ driver = webdriver.Chrome()
 # * Function To Get Grades From Blackboard
 # scrape_grades_from_blackboard(driver, username, password)
 
+# * Funct to Download and zip content
+# download_and_zip_content(driver, username, password)
 
+# * Clean up files
+# clean_up_files()
+
+# Close the WebDriver
+driver.quit()
