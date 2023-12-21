@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_from_directory, abort
 from selenium import webdriver
 from scraper import download_and_zip_content
 import os
@@ -11,17 +11,21 @@ file_storage = {}
 
 @app.route('/')
 def index():
+    print('Received request: GET /')
     return render_template('index.html')
 
 
 @app.route('/demo')
 def demo():
+    print('Received request: GET /demo')
     return render_template('demo.html')
 
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
+    print('Received request: POST /scrape')
     data = request.json
+    print('Request contents:', data)  # Print the request contents
     username = data.get('username')
     password = data.get('password')
 
@@ -41,16 +45,16 @@ def scrape():
     return jsonify({'file_key': file_key})  # Send back the unique key
 
 
-@app.route('/download/<file_key>')
-def downloadFile(file_key):
-    # Retrieve the file path from storage
-    file_path = file_storage.get(file_key)
+@app.route('/download/<file_key>', methods=['GET'])
+def download_file(file_key):
+    print(f'Received request: GET /download/{file_key}')
+    current_directory = os.path.dirname(os.path.realpath(__file__)) 
+    file_path = os.path.join(current_directory, file_key)  
+    
+    if not os.path.isfile(file_path):
+        abort(404, description="File not found")  # Handle the case where the file doesn't exist
 
-    # Check if file exists
-    if file_path and os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
-    else:
-        return "File not found", 404
+    return send_from_directory(current_directory, file_key, as_attachment=True)
 
 
 if __name__ == '__main__':

@@ -7,7 +7,6 @@
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
     <title>Demo - Blackboard Scrapper</title>
-    <link href="https://rsms.me/inter/inter-ui.css" rel="stylesheet" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
@@ -47,11 +46,12 @@
         <div>
           <h4>Login to Your Account</h4>
           <!-- Login Form -->
-          <form style="margin-bottom: 20px" onsubmit="DownloadCourses()">
+          <form style="margin-bottom: 20px" onsubmit="DownloadCourses(event)">
             <div class="form-group">
               <input
                 type="text"
                 class="form-control"
+                id="username"
                 placeholder="Username"
                 required
               />
@@ -60,10 +60,12 @@
               <input
                 type="password"
                 class="form-control"
+                id="password"
                 placeholder="Password"
                 required
               />
             </div>
+
             <button type="submit" class="btn btn-success">Login</button>
           </form>
         </div>
@@ -99,7 +101,8 @@
 </html>
 
 <script>
-  function DownloadCourses() {
+  function DownloadCourses(e) {
+    e.preventDefault();
     var username = document.getElementById("username").value;
     var password = document.getElementById("password").value;
 
@@ -121,7 +124,12 @@
       })
       .then(function (data) {
         var fileKey = data.file_key;
-        window.location.href = "/download/" + fileKey;
+        var link = document.createElement("a");
+        link.href = `/download/${fileKey}_downloaded_content.zip`;
+        link.download = fileKey;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       })
       .catch(function (error) {
         console.error(error);
