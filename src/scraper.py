@@ -1,19 +1,32 @@
-# Import the necessary modules
-import shutil
-import requests
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
-import zipfile
 import os
 import re
+import shutil
+import zipfile
+import mimetypes
+import requests
+import ray
+from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
+
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+chrome_options.add_argument("--disable-images")
+prefs = {"profile.managed_default_content_settings.images": 2}
+chrome_options.add_experimental_option("prefs", prefs)
 
 # * Logs a user into the Blackboard website using Selenium WebDriver.
+
+
 def log_into_blackboard(driver, username, password):
     driver.set_page_load_timeout(10)
 
@@ -207,11 +220,11 @@ def generate_html(grades):
 # * This function scrapes the grades from Blackboard for a given username and password.
 
 
-def scrape_grades_from_blackboard(driver, blackboard_username, blackboard_password):
+def scrape_grades_from_blackboard(driver, username, password):
     """
     Args:
-        blackboard_username (str): The username for the Blackboard account
-        blackboard_password (str): The password for the Blackboard account
+        username (str): The username for the Blackboard account
+        password (str): The password for the Blackboard account
     Returns:
         None
     Notes: 
@@ -219,7 +232,7 @@ def scrape_grades_from_blackboard(driver, blackboard_username, blackboard_passwo
     """
 
     # login to blackboard
-    log_into_blackboard(driver, blackboard_username, blackboard_password)
+    log_into_blackboard(driver, username, password)
 
     # Go to the grades page and get a list of course hrefs
     course_hrefs = get_grades_page_links(driver)
@@ -261,165 +274,118 @@ def scrape_grades_from_blackboard(driver, blackboard_username, blackboard_passwo
 # * and extracting the course and assignment names and URLs.
 
 
+ray.init()
+
+
+@ray.remote
+def download_and_save_file(course_name, assignment_name, url, cookies):
+    os.makedirs(course_name, exist_ok=True)
+
+    with requests.Session() as s:
+        s.cookies.update(cookies)
+        response = s.get(url)
+
+    content_type = response.headers.get('Content-Type')
+    guessed_extension = mimetypes.guess_extension(content_type)
+
+    # Extract current extension from assignment_name
+    name, current_extension = os.path.splitext(assignment_name)
+
+    # Determine if the current extension is appropriate
+    if current_extension:
+        mime_of_current_extension = mimetypes.guess_type(assignment_name)[0]
+        if mime_of_current_extension == content_type:
+            extension = current_extension  # Current extension is correct
+        else:
+            # Replace with guessed or keep current
+            extension = guessed_extension or current_extension
+    else:
+        # Check for HTML content before defaulting to .bin
+        if 'html' in content_type or b'<html' in response.content:
+            extension = '.html'
+        else:
+            # Default to .bin if no extension is guessed
+            extension = guessed_extension or '.bin'
+
+    # Adjust file name
+    file_path = os.path.join(course_name, name + extension)
+
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+
+
+def get_cookies(driver):
+    return {cookie['name']: cookie['value'] for cookie in driver.get_cookies()}
+
+
 def scrape_content_from_blackboard(driver, blackboard_username, blackboard_password):
-    """
-    Arguments:
-    blackboard_username - str: The username for the blackboard account.
-    blackboard_password - str: The password for the blackboard account.
-
-    Returns: None
-    """
-
-    # login to blackboard
+    # Assuming this function logs into Blackboard
     log_into_blackboard(driver, blackboard_username, blackboard_password)
-    # Get the html source code
     html = driver.page_source
-    # Parse the HTML code using BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
 
-    content_links = {}
-
-    # Add try-except block
     try:
-        # Get the div id div_4_1
         div_4_1 = soup.find("div", id="div_4_1")
-        # Get the ul element
         courses = div_4_1.find_all("ul")[0]
-
     except Exception as e:
         print(e)
         return
 
-    # Create a dictionary to store the hrefs
-    hrefs = {}
-    # for each li element in the courses get the href
-    for course in courses.find_all("li"):
-        # Get the href
-        href = course.find("a")["href"]
-        # If the href is empty, skip it
-        if href == "":
-            continue
-        # Remove empty spaces from the href
-        href = href.strip()
-        # Add the href to the dictionary
-        hrefs[course.text] = href
+    hrefs = {course.text.strip(): course.find("a")["href"].strip(
+    ) for course in courses.find_all("li") if course.find("a")["href"]}
 
-    # Visit each course
+    cookies = get_cookies(driver)
+    download_tasks = []
+
     for course, href in hrefs.items():
-        # Course name = course minus \n
-        course_name = course.strip("\n")
-        course_name = re.sub(r'[\\/:*?"<>|]', '', course_name)
-        # Append the href to the base url
+        course_name = re.sub(r'[\\/:*?"<>|]', '', course.strip("\n"))
         full_url = "https://kettering.blackboard.com" + href
-        # Scrape the href
         driver.get(full_url)
-        # Wait for the page to load
-        driver.implicitly_wait(10)
-        # Get the HTML source code of the page
-        html = driver.page_source
-        # Parse the HTML code using BeautifulSoup
-        soup = BeautifulSoup(html, "html.parser")
-        # Find the a element with id "menuPuller"
+        driver.implicitly_wait(10)  # Consider explicit waits here
+        soup = BeautifulSoup(driver.page_source, "html.parser")
         menu_puller_a = driver.find_element(By.ID, "menuPuller")
-        # Wait for the page to load
-        driver.implicitly_wait(10)
-        # Click the div element
         menu_puller_a.click()
-        # Get the div id courseMenuPalette_contents
+        driver.implicitly_wait(10)
         menuWrap = soup.find("div", id="menuWrap")
-        # get the class courseMenu
         course_menu = menuWrap.find("ul", class_="courseMenu")
 
-        # for each li element in the course menu
         for li in course_menu.find_all("li"):
-            # Try to get the href if it doesn't exist, skip it
             try:
-                # Get the href
                 href = li.find("a")["href"]
-            except:
-                continue
-
-            # if href isn't a relative url, skip it
-            if href[0] != "/":
-                continue
-            # Append the href to the base url
-            full_url = "https://kettering.blackboard.com" + href
-            # Scrape the href
-            driver.get(full_url)
-            # Wait for the page to load
-            driver.implicitly_wait(10)
-            # Soup ts
-            current_page = BeautifulSoup(driver.page_source, "html.parser")
-
-            # Find the all the ul elements
-            content_listContainer = current_page.find(
-                'ul', {'id': 'content_listContainer', 'class': 'contentListPlain'})
-
-            # If none, skip it
-            if content_listContainer is None:
-                continue
-
-            # Find all of the li elements
-            content_listContainer = content_listContainer.find_all('li')
-            # For each li element look for the ul class attachments clearfix
-            for li in content_listContainer:
-                # Assigment Name
-                assignment_name = li.text
-                # Remove \n
-                assignment_name = assignment_name.strip("\n")
-                # Remove everything after the first \n
-                assignment_name = assignment_name.split("\n")[0]
-                # Remove all special characters
-                assignment_name = re.sub(r'[\\/:*?"<>|]', '_', assignment_name)
-
-                # If the assignment name is give it a default name
-                if assignment_name == "":
-                    assignment_name = "Untitled"
-
-                # Select the a element
-                a = li.select_one('a')
-                # if a is None, skip it
-                if a is None:
+                if href[0] != "/":
                     continue
-                # Get the href attribute
-                href = a['href']
-                # If the href is a full url, skip it
-                if href[0] == "h":
-                    continue
-                # Append the href to the base url
                 full_url = "https://kettering.blackboard.com" + href
-                # Save the full url
                 driver.get(full_url)
-                # Wait for the page to load
                 driver.implicitly_wait(10)
-                # get the website url
-                url = driver.current_url
-                # store this in content_links
-                content_links[assignment_name] = url
+                current_page = BeautifulSoup(driver.page_source, "html.parser")
+                content_listContainer = current_page.find(
+                    'ul', {'id': 'content_listContainer', 'class': 'contentListPlain'})
 
-            # Iterate through the content_links and download and save the files
-            for assignment_name, url in content_links.items():
-                # Check if the directory exists
-                if not os.path.exists(course_name):
-                    # Create the directory
-                    os.makedirs(course_name)
-                # Download the file
-                response = requests.get(url)
-                # Save the file
-                with open(course_name + "/" + assignment_name, "wb") as f:
-                    f.write(response.content)
-                # Clear the content_links
-            content_links.clear()
+                if content_listContainer:
+                    for li in content_listContainer.find_all('li'):
+                        assignment_name = re.sub(
+                            r'[\\/:*?"<>|]', '_', li.text.strip().split("\n")[0] or "Untitled")
+                        a = li.select_one('a')
+                        if a and a['href'][0] != "h":
+                            full_url = "https://kettering.blackboard.com" + \
+                                a['href']
+                            download_tasks.append(download_and_save_file.remote(
+                                course_name, assignment_name, full_url, cookies))
+            except Exception as e:
+                continue
+
+    # Wait for all downloads to complete
+    ray.get(download_tasks)
 
 
-def download_and_zip_content(driver, blackboard_username, blackboard_password):
+def download_and_zip_content(driver, username, password):
     """
     Scrape the content from Blackboard and zip it.
 
     Args:
         driver: Selenium WebDriver instance.
-        blackboard_username (str): The username for the Blackboard account.
-        blackboard_password (str): The password for the Blackboard account.
+        username (str): The username for the Blackboard account.
+        password (str): The password for the Blackboard account.
 
     Returns:
         str: The path of the created zip file.
@@ -427,7 +393,7 @@ def download_and_zip_content(driver, blackboard_username, blackboard_password):
 
     # Scrape the content from Blackboard
     scrape_content_from_blackboard(
-        driver, blackboard_username, blackboard_password)
+        driver, username, password)
 
     zip_file_path = username + '_downloaded_content.zip'
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
@@ -442,43 +408,55 @@ def download_and_zip_content(driver, blackboard_username, blackboard_password):
 
 
 def clean_up_files():
-    """
-    Deletes the directories and files created during the scraping process, 
-    avoiding duplicates in the 'docs' folder.
-    """
-    # Define the folders to exclude from moving
-    excluded_folders = ['src', 'docs', 'support']
+    excluded_folders = ['src', 'docs', 'support', 'node_modules', '.git']
 
-    # Iterate through each item in the current directory
     for item in os.listdir():
-        # Check if the item is a directory and not in the excluded list
         if os.path.isdir(item) and item not in excluded_folders:
-            # Construct the new path inside the 'docs' folder
-            new_path = os.path.join('docs', item)
+            source_path = item
+            dest_path = os.path.join('docs', item)
 
-            # Check for duplicates
-            if not os.path.exists(new_path):
-                # Move the folder to the new path
-                shutil.move(item, new_path)
+            if not os.path.exists(dest_path):
+                shutil.move(source_path, dest_path)
             else:
-                print(f"Duplicate found, not moving {item}")
+                for sub_item in os.listdir(source_path):
+                    source_sub_item = os.path.join(source_path, sub_item)
+                    dest_sub_item = os.path.join(dest_path, sub_item)
 
-    print("Folders moved to 'docs' successfully.")
+                    if os.path.isdir(source_sub_item):
+                        if not os.path.exists(dest_sub_item):
+                            shutil.move(source_sub_item, dest_sub_item)
+                        else:
+                            # Remove existing directory before moving
+                            shutil.rmtree(dest_sub_item)
+                            shutil.move(source_sub_item, dest_sub_item)
+                    elif os.path.isfile(source_sub_item) and not os.path.exists(dest_sub_item):
+                        shutil.move(source_sub_item, dest_sub_item)
 
-    # Delete the zip file if it exists
+                if not os.listdir(source_path):  # Check if directory is now empty
+                    shutil.rmtree(source_path)  # Safe to remove
+
+            print(f"Processed {item}")
+
+    print("Folders merged into 'docs' successfully.")
+
     if os.path.exists('downloaded_content.zip'):
         os.remove('downloaded_content.zip')
 
     print("Clean-up completed.")
 
 
+clean_up_files()
+
 # Usage Example
 
 
-driver = webdriver.Chrome()
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+
+driver = webdriver.Chrome(options=chrome_options)
 
 # * Log Into Blackboard
-log_into_blackboard(driver, username, password)
+# log_into_blackboard(driver, username, password)
 
 # * Function To Download All Files From Blackboard
 # scrape_content_from_blackboard(driver, username, password)
@@ -490,7 +468,7 @@ log_into_blackboard(driver, username, password)
 # download_and_zip_content(driver, username, password)
 
 # * Clean up files
-# clean_up_files()
+clean_up_files()
 
 # Close the WebDriver
 driver.quit()
