@@ -408,7 +408,7 @@ def download_and_zip_content(driver, username, password):
 
 
 def clean_up_files():
-    excluded_folders = ['src', 'docs', 'support', 'node_modules', '.git']
+    excluded_folders = ['src', 'docs', 'support', '.vscode', '.git']
 
     for item in os.listdir():
         if os.path.isdir(item) and item not in excluded_folders:
@@ -445,13 +445,9 @@ def clean_up_files():
     print("Clean-up completed.")
 
 
-clean_up_files()
 
 # Usage Example
 
-
-chrome_options = Options()
-chrome_options.add_argument("--headless")
 
 driver = webdriver.Chrome(options=chrome_options)
 
@@ -468,7 +464,7 @@ driver = webdriver.Chrome(options=chrome_options)
 # download_and_zip_content(driver, username, password)
 
 # * Clean up files
-clean_up_files()
+# clean_up_files()
 
 # Close the WebDriver
 driver.quit()
