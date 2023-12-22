@@ -7,45 +7,45 @@ from bs4 import BeautifulSoup
 import zipfile
 import os
 import re
-
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # * Logs a user into the Blackboard website using Selenium WebDriver.
 def log_into_blackboard(driver, username, password):
-    """
-    Arguments:
-        driver (webdriver.Firefox, webdriver.Chrome, ...): Selenium WebDriver instance.
-        username (str): User's username.
-        password (str): User's password.
-    """
+    driver.set_page_load_timeout(10)
 
-    # Wait for up to 10 seconds for elements to become available
-    driver.implicitly_wait(10)
+    try:
+        driver.get("https://blackboard.kettering.edu/")
 
-    # Go to the login page
-    driver.get("https://blackboard.kettering.edu/")
+        # Wait for redirect
+        WebDriverWait(driver, 10).until(
+            EC.url_changes("https://blackboard.kettering.edu/"))
 
-    # Wait for the redirect to occur
-    while driver.current_url == "https://blackboard.kettering.edu/":
-        pass
+        # Find the login form elements
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "loginForm")))
+        username_field = driver.find_element(By.ID, "inputUserID")
+        password_field = driver.find_element(By.ID, "inputPassword")
+        login_button = driver.find_element(By.ID, "sign-button")
 
-    # Find the login form
-    login_form = driver.find_element(By.ID, "loginForm")
+        # Enter credentials and submit
+        username_field.send_keys(username)
+        password_field.send_keys(password)
+        login_button.click()
 
-    # Find the username, password, and login button fields
-    username_field = login_form.find_element(By.ID, "inputUserID")
-    password_field = login_form.find_element(By.ID, "inputPassword")
-    login_button = login_form.find_element(By.ID, "sign-button")
+        # Handle cookie button if present
+        try:
+            cookies_button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.ID, "agree_button")))
+            cookies_button.click()
+        except TimeoutException:
+            pass  # Cookie button not found or not clickable
 
-    # Enter the username and password
-    username_field.send_keys(username)
-    password_field.send_keys(password)
-
-    # Click the login button using JavaScript
-    driver.execute_script("arguments[0].click();", login_button)
-
-    # Wait for the redirect to occur
-    cookies_button = driver.find_element(By.ID, "agree_button")
-    cookies_button.click()
+    except (TimeoutException, NoSuchElementException) as e:
+        print(f"Error during login: {e}")
 
 
 # * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
@@ -473,13 +473,12 @@ def clean_up_files():
 
 
 # Usage Example
-username = "free8864"
-password = "#CFi^F6TTwot2j"
+
 
 driver = webdriver.Chrome()
 
 # * Log Into Blackboard
-# log_into_blackboard(driver, username, password)
+log_into_blackboard(driver, username, password)
 
 # * Function To Download All Files From Blackboard
 # scrape_content_from_blackboard(driver, username, password)
