@@ -25,40 +25,37 @@ prefs = {"profile.managed_default_content_settings.images": 2}
 chrome_options.add_experimental_option("prefs", prefs)
 
 # * Logs a user into the Blackboard website using Selenium WebDriver.
-
-
 def log_into_blackboard(driver, username, password):
     driver.set_page_load_timeout(10)
 
     try:
         driver.get("https://blackboard.kettering.edu/")
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "loginForm")))
 
-        # Wait for redirect
-        WebDriverWait(driver, 10).until(
-            EC.url_changes("https://blackboard.kettering.edu/"))
-
-        # Find the login form elements
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, "loginForm")))
         username_field = driver.find_element(By.ID, "inputUserID")
         password_field = driver.find_element(By.ID, "inputPassword")
         login_button = driver.find_element(By.ID, "sign-button")
 
-        # Enter credentials and submit
         username_field.send_keys(username)
         password_field.send_keys(password)
         login_button.click()
 
-        # Handle cookie button if present
-        try:
-            cookies_button = WebDriverWait(driver, 5).until(
-                EC.element_to_be_clickable((By.ID, "agree_button")))
-            cookies_button.click()
-        except TimeoutException:
-            pass  # Cookie button not found or not clickable
+        # Wait a short time to check for redirect
+        WebDriverWait(driver, 1).until_not(EC.presence_of_element_located((By.ID, "loginForm")))
 
-    except (TimeoutException, NoSuchElementException) as e:
-        print(f"Error during login: {e}")
+    except TimeoutException:
+        # If timeout occurs, check for error message
+        error_message_element = driver.find_element(By.CSS_SELECTOR, "#loginForm > div:nth-child(2) > div")
+        error_message = error_message_element.text.strip()
+        if error_message:
+            return f"Login failed: {error_message}"
+        else:
+            return "Login failed, but no specific error message found."
+
+    except (NoSuchElementException, Exception) as e:
+        return f"Error during login: {e}"
+
+    return "Login successful"
 
 
 # * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
@@ -445,14 +442,13 @@ def clean_up_files():
     print("Clean-up completed.")
 
 
-
 # Usage Example
 
 
 driver = webdriver.Chrome(options=chrome_options)
 
 # * Log Into Blackboard
-# log_into_blackboard(driver, username, password)
+# log_into_blackboard(driver, username, password))
 
 # * Function To Download All Files From Blackboard
 # scrape_content_from_blackboard(driver, username, password)
