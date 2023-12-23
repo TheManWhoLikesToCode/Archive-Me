@@ -283,7 +283,7 @@ def scrape_grades_from_blackboard(driver, username, password):
 
 
 
-ray.init()
+
 @ray.remote
 def download_and_save_file(course_name, assignment_name, url, cookies):
     os.makedirs(course_name, exist_ok=True)
@@ -422,7 +422,7 @@ def clean_up_files():
         for file in files:
             if file.endswith('.pdf'):
                 file_path = os.path.join(root, file)
-                compress(file_path, file_path, 3)
+                compress(file_path, file_path, power=4)
 
     for item in os.listdir():
         if os.path.isdir(item) and item not in excluded_folders:
@@ -461,7 +461,7 @@ def clean_up_files():
 
 # Login Information
 
-
+# ray.init()
 # driver = webdriver.Chrome(options=chrome_options)
 
 # * Log Into Blackboard
@@ -481,3 +481,4 @@ def clean_up_files():
 
 # Close the WebDriver
 # driver.quit()
+
