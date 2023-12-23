@@ -48,6 +48,14 @@ def log_into_blackboard(driver, username, password):
         WebDriverWait(driver, 1).until_not(
             EC.presence_of_element_located((By.ID, "loginForm")))
 
+        # Handle cookie button if present
+        try:
+            cookies_button = WebDriverWait(driver, 5).until(
+                EC.element_to_be_clickable((By.ID, "agree_button")))
+            cookies_button.click()
+        except TimeoutException:
+            pass  # Cookie button not found or not clickable
+
     except TimeoutException:
         # If timeout occurs, check for error message
         error_message_element = driver.find_element(
@@ -273,13 +281,9 @@ def scrape_grades_from_blackboard(driver, username, password):
     # Close the browser
     driver.close()
 
-# * This function scrapes the content from the blackboard website by logging in to the blackboard website, accessing the courses and content,
-# * and extracting the course and assignment names and URLs.
 
 
 ray.init()
-
-
 @ray.remote
 def download_and_save_file(course_name, assignment_name, url, cookies):
     os.makedirs(course_name, exist_ok=True)
@@ -412,6 +416,13 @@ def download_and_zip_content(driver, username, password):
 
 def clean_up_files():
     excluded_folders = ['src', 'docs', 'support', '.vscode', '.git']
+                    
+    # Compress PDFs
+    for root, dirs, files in os.walk('.'):
+        for file in files:
+            if file.endswith('.pdf'):
+                file_path = os.path.join(root, file)
+                compress(file_path, file_path, 3)
 
     for item in os.listdir():
         if os.path.isdir(item) and item not in excluded_folders:
@@ -448,7 +459,10 @@ def clean_up_files():
     print("Clean-up completed.")
 
 
-driver = webdriver.Chrome(options=chrome_options)
+# Login Information
+
+
+# driver = webdriver.Chrome(options=chrome_options)
 
 # * Log Into Blackboard
 # log_into_blackboard(driver, username, password))
@@ -466,4 +480,4 @@ driver = webdriver.Chrome(options=chrome_options)
 # clean_up_files()
 
 # Close the WebDriver
-driver.quit()
+# driver.quit()
