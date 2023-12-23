@@ -6,6 +6,7 @@ import mimetypes
 import requests
 import ray
 from bs4 import BeautifulSoup
+from pdf_compressor import compress
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -25,12 +26,15 @@ prefs = {"profile.managed_default_content_settings.images": 2}
 chrome_options.add_experimental_option("prefs", prefs)
 
 # * Logs a user into the Blackboard website using Selenium WebDriver.
+
+
 def log_into_blackboard(driver, username, password):
     driver.set_page_load_timeout(10)
 
     try:
         driver.get("https://blackboard.kettering.edu/")
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "loginForm")))
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "loginForm")))
 
         username_field = driver.find_element(By.ID, "inputUserID")
         password_field = driver.find_element(By.ID, "inputPassword")
@@ -41,11 +45,13 @@ def log_into_blackboard(driver, username, password):
         login_button.click()
 
         # Wait a short time to check for redirect
-        WebDriverWait(driver, 1).until_not(EC.presence_of_element_located((By.ID, "loginForm")))
+        WebDriverWait(driver, 1).until_not(
+            EC.presence_of_element_located((By.ID, "loginForm")))
 
     except TimeoutException:
         # If timeout occurs, check for error message
-        error_message_element = driver.find_element(By.CSS_SELECTOR, "#loginForm > div:nth-child(2) > div")
+        error_message_element = driver.find_element(
+            By.CSS_SELECTOR, "#loginForm > div:nth-child(2) > div")
         error_message = error_message_element.text.strip()
         if error_message:
             return f"Login failed: {error_message}"
@@ -440,9 +446,6 @@ def clean_up_files():
         os.remove('downloaded_content.zip')
 
     print("Clean-up completed.")
-
-
-# Usage Example
 
 
 driver = webdriver.Chrome(options=chrome_options)
