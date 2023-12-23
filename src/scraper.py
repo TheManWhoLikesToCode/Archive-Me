@@ -69,7 +69,7 @@ def log_into_blackboard(driver, username, password):
     except (NoSuchElementException, Exception) as e:
         return f"Error during login: {e}"
 
-    return "Login successful"
+    return driver  # Return the logged-in driver
 
 
 # * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
@@ -231,7 +231,7 @@ def generate_html(grades):
 # * This function scrapes the grades from Blackboard for a given username and password.
 
 
-def scrape_grades_from_blackboard(driver, username, password):
+def scrape_grades_from_blackboard(driver):
     """
     Args:
         username (str): The username for the Blackboard account
@@ -241,9 +241,6 @@ def scrape_grades_from_blackboard(driver, username, password):
     Notes: 
         passes all_grades to generate html
     """
-
-    # login to blackboard
-    log_into_blackboard(driver, username, password)
 
     # Go to the grades page and get a list of course hrefs
     course_hrefs = get_grades_page_links(driver)
@@ -280,8 +277,6 @@ def scrape_grades_from_blackboard(driver, username, password):
     generate_html(all_grades)
     # Close the browser
     driver.close()
-
-
 
 
 @ray.remote
@@ -325,9 +320,8 @@ def get_cookies(driver):
     return {cookie['name']: cookie['value'] for cookie in driver.get_cookies()}
 
 
-def scrape_content_from_blackboard(driver, blackboard_username, blackboard_password):
+def scrape_content_from_blackboard(driver):
     # Assuming this function logs into Blackboard
-    log_into_blackboard(driver, blackboard_username, blackboard_password)
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
 
@@ -385,7 +379,7 @@ def scrape_content_from_blackboard(driver, blackboard_username, blackboard_passw
     ray.get(download_tasks)
 
 
-def download_and_zip_content(driver, username, password):
+def download_and_zip_content(driver):
     """
     Scrape the content from Blackboard and zip it.
 
@@ -400,7 +394,7 @@ def download_and_zip_content(driver, username, password):
 
     # Scrape the content from Blackboard
     scrape_content_from_blackboard(
-        driver, username, password)
+        driver)
 
     zip_file_path = username + '_downloaded_content.zip'
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
@@ -416,16 +410,17 @@ def download_and_zip_content(driver, username, password):
 
 def clean_up_files():
     excluded_folders = ['src', 'docs', 'support', '.vscode', '.git']
-                    
+
     # Compress PDFs
     for root, dirs, files in os.walk('.'):
-        dirs[:] = [d for d in dirs if d not in excluded_folders]  # Exclude specified folders
+        # Exclude specified folders
+        dirs[:] = [d for d in dirs if d not in excluded_folders]
         for file in files:
             if file.endswith('.pdf'):
                 file_path = os.path.join(root, file)
                 compressed_file_path = file_path[:-4] + '-c.pdf'
                 compress(file_path, compressed_file_path, power=4)
-                os.remove(file_path) 
+                os.remove(file_path)
 
     for item in os.listdir():
         if os.path.isdir(item) and item not in excluded_folders:
@@ -476,11 +471,11 @@ def clean_up_files():
 # driver = webdriver.Chrome(options=chrome_options)
 
 # * Log Into Blackboard
-# log_into_blackboard(driver, username, password))
+# driver = log_into_blackboard(driver, username, password)
 
 # * Function To Download All Files From Blackboard
 # Time = 45 Seconds
-# scrape_content_from_blackboard(driver, username, password)
+# scrape_content_from_blackboard(driver)
 
 # * Function To Get Grades From Blackboard
 # scrape_grades_from_blackboard(driver, username, password)
