@@ -33,6 +33,11 @@ def log_into_blackboard(driver, username, password):
 
     try:
         driver.get("https://blackboard.kettering.edu/")
+
+        # Optimized wait time for checking if already logged in
+        if check_logged_in(driver, wait_time=3):
+            return driver  # User is already logged in
+
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "loginForm")))
 
@@ -44,20 +49,19 @@ def log_into_blackboard(driver, username, password):
         password_field.send_keys(password)
         login_button.click()
 
-        # Wait a short time to check for redirect
-        WebDriverWait(driver, 1).until_not(
+        # Adjusted wait time after login attempt
+        WebDriverWait(driver, 5).until_not(
             EC.presence_of_element_located((By.ID, "loginForm")))
 
-        # Handle cookie button if present
         try:
-            cookies_button = WebDriverWait(driver, 5).until(
+            # Reduced wait time for cookie button as it might appear quickly
+            cookies_button = WebDriverWait(driver, 3).until(
                 EC.element_to_be_clickable((By.ID, "agree_button")))
             cookies_button.click()
         except TimeoutException:
             pass  # Cookie button not found or not clickable
 
     except TimeoutException:
-        # If timeout occurs, check for error message
         error_message_element = driver.find_element(
             By.CSS_SELECTOR, "#loginForm > div:nth-child(2) > div")
         error_message = error_message_element.text.strip()
@@ -70,6 +74,16 @@ def log_into_blackboard(driver, username, password):
         return f"Error during login: {e}"
 
     return driver  # Return the logged-in driver
+
+
+def check_logged_in(driver, wait_time=5):
+    try:
+        # Check for the presence of the navigation area which indicates logged-in state
+        WebDriverWait(driver, wait_time).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "#globalNavPageNavArea > table")))
+        return True
+    except TimeoutException:
+        return False
 
 
 # * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
@@ -379,7 +393,7 @@ def scrape_content_from_blackboard(driver):
     ray.get(download_tasks)
 
 
-def download_and_zip_content(driver):
+def download_and_zip_content(driver, username):
     """
     Scrape the content from Blackboard and zip it.
 

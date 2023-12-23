@@ -34,7 +34,7 @@
       <div>
         <h4>Login to Your Account</h4>
         <!-- Login Form -->
-        <form style="margin-bottom: 20px" onsubmit="DownloadCourses(event)">
+        <form style="margin-bottom: 20px" onsubmit="Login(event)">
           <div class="form-group">
             <input type="text" class="form-control" id="username" placeholder="Username" required />
           </div>
@@ -43,9 +43,9 @@
           </div>
           <div id="response-container" class="alert" style="display:none;"></div>
 
-          <button type="submit" class="btn btn-success" onclick="showLoadingScreen()">Login</button>
+          <button type="submit" class="btn btn-success">Login</button>
           <button type="button" class="btn btn-primary" onclick="archiveCourses()">Archive Courses</button>
-
+          <button type="button" class="btn btn-secondary" onclick="downloadArchive()">Download</button>
         </form>
       </div>
     </div>
@@ -69,15 +69,16 @@
     </div>
   </footer>
 
-<!-- Loading Screen -->
-<div id="loading-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000; align-items: center; justify-content: center; display: flex;">
-  <div style="text-align: center;">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-      <span class="sr-only">Loading...</span>
+  <!-- Loading Screen -->
+  <div id="loading-screen"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000; align-items: center; justify-content: center; display: flex;">
+    <div style="text-align: center;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="sr-only">Loading...</span>
+      </div>
+      <p style="margin-top: 10px; color: black;">Loading, please wait...</p>
     </div>
-    <p style="margin-top: 10px; color: black;">Loading, please wait...</p>
   </div>
-</div>
 
   <!-- JavaScript Files -->
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
@@ -86,98 +87,169 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.7.3/feather.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
   <script src="static/scripts.js"></script>
-</body>
 
-</html>
+  <script>
+    function showLoadingScreen() {
+      var loadingScreen = document.getElementById("loading-screen");
+      if (loadingScreen) {
+        loadingScreen.style.display = "block";
+      }
+    }
 
-<script>
-  function showLoadingScreen() {
-    document.getElementById("loading-screen").style.display = "block";
-  }
+    function hideLoadingScreen() {
+      var loadingScreen = document.getElementById("loading-screen");
+      if (loadingScreen) {
+        loadingScreen.style.display = "none";
+      }
+    }
 
-  function hideLoadingScreen() {
-    document.getElementById("loading-screen").style.display = "none";
-  }
+    document.addEventListener("DOMContentLoaded", function () {
+      function Login(e) {
+        e.preventDefault();
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        var responseContainer = document.getElementById("response-container");
 
-  function DownloadCourses(e) {
-    e.preventDefault();
-    var username = document.getElementById("username").value;
-    var password = document.getElementById("password").value;
-    var responseContainer = document.getElementById("response-container");
+        showLoadingScreen();
 
-    showLoadingScreen();
-
-    fetch("/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    })
-      .then(function (response) {
-        if (!response.ok) {
-          return response.json().then(data => {
-            // Extract and throw the server's error message
-            throw new Error(data.error);
+        console.log("Fetching /login...");
+        fetch("/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password,
+          }),
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              return response.json().then(data => {
+                // Extract and throw the server's error message
+                throw new Error(data.error);
+              });
+            }
+            return response.text();
+          })
+          .then(function (data) {
+            // Display the server's response
+            console.log("Server response:", data);
+            responseContainer.innerText = data;
+            responseContainer.style.display = "block";
+            responseContainer.classList.add('alert-success');
+          })
+          .catch(function (error) {
+            // Handle and display the server's error message
+            console.error("Error:", error.message);
+            responseContainer.innerText = error.message;
+            responseContainer.style.display = "block";
+            responseContainer.classList.add('alert-danger');
+          })
+          .finally(function () {
+            hideLoadingScreen();
           });
-        }
-        return response.text();
-      })
-      .then(function (data) {
-        // Display the server's response
-        responseContainer.innerText = data;
-        responseContainer.style.display = "block";
-        responseContainer.classList.add('alert-success');
-      })
-      .catch(function (error) {
-        // Handle and display the server's error message
-        responseContainer.innerText = error.message;
-        responseContainer.style.display = "block";
-        responseContainer.classList.add('alert-danger');
-      })
-      .finally(function () {
-        hideLoadingScreen();
-      });
-  }
+      }
 
-  function archiveCourses() {
-    showLoadingScreen();
+      // Attach the event listener to the form
+      var form = document.querySelector("form");
+      form.addEventListener("submit", Login);
 
-    fetch("/scrape", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then(function (response) {
-        if (!response.ok) {
-          return response.json().then(data => {
-            // Extract and throw the server's error message
-            throw new Error(data.error);
+      hideLoadingScreen();
+    });
+
+    function archiveCourses() {
+      showLoadingScreen();
+
+      fetch("/scrape", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            return response.json().then(data => {
+              // Extract and throw the server's error message
+              throw new Error(data.error);
+            });
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (data.file_key) {
+            // Construct the download URL
+            const downloadUrl = '/download?file_key=' + encodeURIComponent(data.file_key);
+
+            // Create a temporary link and click it to start the download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', data.file_key); // Optional: Set the download file name
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        })
+        .catch(function (error) {
+          // Handle and display the server's error message
+          alert(error.message);
+        })
+        .finally(function () {
+          hideLoadingScreen();
+        });
+    }
+
+    function Login(event) {
+        event.preventDefault();
+
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        var responseContainer = document.getElementById("response-container");
+
+        showLoadingScreen();
+
+        console.log("Fetching /login...");
+        fetch("/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password,
+          }),
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              return response.json().then(data => {
+                // Extract and throw the server's error message
+                throw new Error(data.error);
+              });
+            }
+            return response.text();
+          })
+          .then(function (data) {
+            // Display the server's response in a new tab
+            var newTab = window.open();
+            newTab.document.write(data);
+            newTab.document.close();
+
+            responseContainer.innerText = data;
+            responseContainer.style.display = "block";
+            responseContainer.classList.add('alert-success');
+          })
+          .catch(function (error) {
+            // Handle and display the server's error message
+            console.error("Error:", error.message);
+            responseContainer.innerText = error.message;
+            responseContainer.style.display = "block";
+            responseContainer.classList.add('alert-danger');
+          })
+          .finally(function () {
+            hideLoadingScreen();
           });
-        }
-        return response.text();
-      })
-      .then(function (data) {
-        // Display the server's response
-        alert(data);
-      })
-      .catch(function (error) {
-        // Handle and display the server's error message
-        alert(error.message);
-      })
-      .finally(function () {
-        hideLoadingScreen();
-      });
-  }
-
-  window.onload = function() {
-    hideLoadingScreen();
-  };
-</script>
+      }
+  </script>
 
 
 </body>
