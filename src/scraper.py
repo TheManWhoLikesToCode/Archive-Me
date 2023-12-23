@@ -308,7 +308,7 @@ def download_and_save_file(course_name, assignment_name, url, cookies):
             extension = guessed_extension or current_extension
     else:
         # Check for HTML content before defaulting to .bin
-        if 'html' in content_type or b'<html' in response.content:
+        if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
             extension = '.html'
         else:
             # Default to .bin if no extension is guessed
@@ -419,10 +419,13 @@ def clean_up_files():
                     
     # Compress PDFs
     for root, dirs, files in os.walk('.'):
+        dirs[:] = [d for d in dirs if d not in excluded_folders]  # Exclude specified folders
         for file in files:
             if file.endswith('.pdf'):
                 file_path = os.path.join(root, file)
-                compress(file_path, file_path, power=4)
+                compressed_file_path = file_path[:-4] + '-c.pdf'
+                compress(file_path, compressed_file_path, power=4)
+                os.remove(file_path) 
 
     for item in os.listdir():
         if os.path.isdir(item) and item not in excluded_folders:
@@ -456,10 +459,18 @@ def clean_up_files():
     if os.path.exists('downloaded_content.zip'):
         os.remove('downloaded_content.zip')
 
+    # Delete remaining folders
+    for folder in os.listdir():
+        if os.path.isdir(folder) and folder not in excluded_folders:
+            shutil.rmtree(folder)
+
+    print("Remaining folders deleted.")
+
     print("Clean-up completed.")
 
 
 # Login Information
+
 
 # ray.init()
 # driver = webdriver.Chrome(options=chrome_options)
@@ -468,6 +479,7 @@ def clean_up_files():
 # log_into_blackboard(driver, username, password))
 
 # * Function To Download All Files From Blackboard
+# Time = 45 Seconds
 # scrape_content_from_blackboard(driver, username, password)
 
 # * Function To Get Grades From Blackboard
@@ -477,8 +489,9 @@ def clean_up_files():
 # download_and_zip_content(driver, username, password)
 
 # * Clean up files
+# Pre - 204.7 MB
+# 5 folders - 140.1 MB
 # clean_up_files()
 
 # Close the WebDriver
 # driver.quit()
-
