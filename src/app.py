@@ -1,33 +1,59 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, abort, current_app
+from flask import Flask, render_template, request, jsonify, send_from_directory, abort
 from selenium import webdriver
-from scraper import download_and_zip_content, log_into_blackboard, clean_up_files
+from blackboard_scraper import log_into_blackboard, download_and_zip_content
+from file_management import clean_up_files
+from config import chrome_options
 import os
+import logging
 
 app = Flask(__name__)
 
-# Temporary storage for file path
-file_storage = {}
+# Configuration
+app.config.from_pyfile('config.py')  # External configuration file
 
-driver = None  # Initialize the driver variable
-current_username = None  # Initialize a global variable for username
-file_key = None  # Declare file_key as a global variable
+# Initialize Logging
+logging.basicConfig(level=logging.INFO)
+
+
+class ScraperService:
+    def __init__(self):
+        self.driver = None
+        self.current_username = None
+
+    def initialize_driver(self):
+        if not self.driver:
+            self.driver = webdriver.Chrome(options=chrome_options)
+
+    def login(self, username, password):
+        self.initialize_driver()
+        return log_into_blackboard(self.driver, username, password)
+
+    def scrape(self):
+        return download_and_zip_content(self.driver, self.current_username)
+
+    def reset(self):
+        if self.driver:
+            self.driver.quit()
+        self.driver = None
+        self.current_username = None
+
+
+scraper_service = ScraperService()
+
 
 @app.route('/')
 def index():
-    print('Received request: GET /')
     return render_template('index.html')
+
 
 @app.route('/demo')
 def demo():
-    print('Received request: GET /demo')
     return render_template('demo.html')
+
 
 @app.route('/login', methods=['POST'])
 def login():
-    global driver, current_username  # Use the global driver and username variables
-    print('Received request: POST /login')
     data = request.json
-    print('Request contents:', data)  # Print the request contents
     username = data.get('username')
     password = data.get('password')
 
@@ -35,60 +61,49 @@ def login():
         return jsonify({'error': 'Missing username or password'}), 400
 
     try:
-        if driver is None:  # Check if the driver is not already initialized
-            driver = webdriver.Chrome()
-        logged_in_driver = log_into_blackboard(driver, username, password)
-        if isinstance(logged_in_driver, str):
-            return jsonify({'error': logged_in_driver}), 401
-        current_username = username  # Store the username after successful login
-        print(current_username)
+        scraper_service.current_username = username
+        result = scraper_service.login(username, password)
+        if isinstance(result, str):
+            return jsonify({'error': result}), 401
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
     return "Logged in successfully"
 
+
 @app.route('/scrape', methods=['GET'])
 def scrape():
-
-    global driver, current_username, file_key  # Use the global driver and username variables
-    print('Received request: GET /scrape')
-
-    # Check if the user is logged in
-    if driver is None or current_username is None:
+    if not scraper_service.current_username:
         return jsonify({'error': 'User not logged in'}), 401
 
     try:
-        # Perform scraping and get the file key
-        file_key = download_and_zip_content(driver, current_username)
-        driver.quit()
-        driver = None  # Reset the driver after use
-        current_username = None  # Reset the username after scraping
+        file_key = scraper_service.scrape()
+        scraper_service.reset()
 
-        # Prepare for file download
-        current_directory = os.path.dirname(os.path.realpath(__file__))
-        file_path = os.path.join(current_directory, file_key)
-
+        file_path = os.path.join(os.getcwd(), file_key)
         if not file_key or not os.path.isfile(file_path):
             abort(404, description="File not found")
 
-        return send_from_directory(
-            current_directory, file_key, as_attachment=True)
-
+        return jsonify({'file_key': file_key})
     except Exception as e:
-        if driver:
-            driver.quit()
-            driver = None
+        scraper_service.reset()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/download', methods=['GET'])
-def download():
-    global file_key
-    if not file_key:
-        abort(404, description="File not found")
 
-    uploads = os.path.dirname(os.path.realpath(__file__))
-    return send_from_directory(uploads, file_key, as_attachment=True)
+@app.route('/download/<file_key>', methods=['GET'])
+def download(file_key):
+    """
+    Download a file by its file key.
+    """
+    try:
+        file_path = os.path.join(os.getcwd(), file_key)
+        if not os.path.isfile(file_path):
+            abort(404, description="File not found")
+
+        return send_from_directory(os.getcwd(), file_key, as_attachment=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])

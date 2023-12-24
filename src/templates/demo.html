@@ -1,93 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <title>Demo - Blackboard Scrapper</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
-  <link rel="stylesheet" href="static/default.css" id="theme-color" />
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Demo - Blackboard Scrapper</title>
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
+    <link rel="stylesheet" href="static/default.css" id="theme-color" />
+  </head>
 
-<body>
-  <!-- Navigation -->
-  <section class="smart-scroll">
-    <div class="container-fluid">
-      <nav class="navbar navbar-expand-md navbar-dark">
-        <a class="navbar-brand heading-black" href="./"><i class="fa fa-arrow-left"></i></a>
-      </nav>
-    </div>
-  </section>
-
-  <!-- Demo Content -->
-  <section class="demo-section" style="margin-top: 70px">
-    <div class="container">
-      <h2>Interactive Demo of Blackboard Scrapper</h2>
-      <p>
-        Explore how Blackboard Scrapper works. This demo simulates the core
-        functionalities of the application.
-      </p>
-
-      <!-- Interactive Demo Box -->
-      <div>
-        <h4>Login to Your Account</h4>
-        <!-- Login Form -->
-        <form style="margin-bottom: 20px" onsubmit="Login(event)">
-          <div class="form-group">
-            <input type="text" class="form-control" id="username" placeholder="Username" required />
-          </div>
-          <div class="form-group">
-            <input type="password" class="form-control" id="password" placeholder="Password" required />
-          </div>
-          <div id="response-container" class="alert" style="display:none;"></div>
-
-          <button type="submit" class="btn btn-success">Login</button>
-          <button type="button" class="btn btn-primary" onclick="archiveCourses()">Archive Courses</button>
-          <button type="button" class="btn btn-secondary" onclick="downloadArchive()">Download</button>
-        </form>
+  <body>
+    <!-- Navigation -->
+    <section class="smart-scroll">
+      <div class="container-fluid">
+        <nav class="navbar navbar-expand-md navbar-dark">
+          <a class="navbar-brand heading-black" href="./"><i
+              class="fa fa-arrow-left"></i></a>
+        </nav>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Footer -->
-  <footer class="py-6">
-    <div class="container">
-      <div class="row">
-        <div class="col-sm-5 mr-auto">
-          <h5>About Archive Me</h5>
-          <p class="text-muted">
-            This is a demo page for the Blackboard Scrapper tool, designed to
-            help Kettering University students manage their educational
-            resources efficiently.
-          </p>
-          <!-- Social Media Links -->
+    <!-- Demo Content -->
+    <section class="demo-section" style="margin-top: 70px">
+      <div class="container">
+        <h2>Interactive Demo of Blackboard Scrapper</h2>
+        <p>
+          Explore how Blackboard Scrapper works. This demo simulates the core
+          functionalities of the application.
+        </p>
+
+        <!-- Interactive Demo Box -->
+        <div>
+          <h4>Login to Your Account</h4>
+          <!-- Login Form -->
+          <form style="margin-bottom: 20px" id="loginForm">
+            <div class="form-group">
+              <input type="text" class="form-control" id="username"
+                placeholder="Username" required />
+            </div>
+            <div class="form-group">
+              <input type="password" class="form-control" id="password"
+                placeholder="Password" required />
+            </div>
+            <div id="response-container" class="alert"
+              style="display:none;"></div>
+
+            <button type="submit" class="btn btn-success">Login</button>
+            <button type="button" class="btn btn-primary"
+              id="archiveButton">Archive Courses</button>
+            <button type="button" class="btn btn-secondary"
+              id="downloadButton">Download</button>
+          </form>
         </div>
-        <!-- Other footer content -->
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-6">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-5 mr-auto">
+            <h5>About Archive Me</h5>
+            <p class="text-muted">
+              This is a demo page for the Blackboard Scrapper tool, designed to
+              help Kettering University students manage their educational
+              resources efficiently.
+            </p>
+            <!-- Social Media Links -->
+          </div>
+          <!-- Other footer content -->
+        </div>
+      </div>
+    </footer>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen"
+      style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000; align-items: center; justify-content: center; display: flex;">
+      <div style="text-align: center;">
+        <div class="spinner-border text-primary" role="status"
+          style="width: 3rem; height: 3rem;">
+          <span class="sr-only">Loading...</span>
+        </div>
+        <p style="margin-top: 10px; color: black;">Loading, please wait...</p>
       </div>
     </div>
-  </footer>
 
-  <!-- Loading Screen -->
-  <div id="loading-screen"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); z-index: 1000; align-items: center; justify-content: center; display: flex;">
-    <div style="text-align: center;">
-      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-        <span class="sr-only">Loading...</span>
-      </div>
-      <p style="margin-top: 10px; color: black;">Loading, please wait...</p>
-    </div>
-  </div>
-
-  <!-- JavaScript Files -->
-  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.7.3/feather.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
-  <script src="static/scripts.js"></script>
-  <script src="static/main.js"></script>
-</body>
+    <!-- JavaScript Files -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.7.3/feather.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+    <script src="static/scripts.js"></script>
+  </body>
 
 </html>
