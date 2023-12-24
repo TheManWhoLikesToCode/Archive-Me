@@ -97,6 +97,15 @@ const app = (() => {
     }
   };
 
+  const updateDownloadButtonVisibility = () => {
+    const downloadButton = document.getElementById("downloadButton");
+    if (fileKeyGlobal) {
+      downloadButton.style.display = "block"; // Show button if file_key is present
+    } else {
+      downloadButton.style.display = "none"; // Hide button otherwise
+    }
+  };
+
   const fetchWithErrorHandler = async (url, options) => {
     const response = await fetch(url, options);
     if (!response.ok) {
@@ -150,6 +159,7 @@ const app = (() => {
         fileKeyGlobal = data.file_key;
         console.log("Archive successful. Ready for download.");
         alert("Archive successful. Ready for download.");
+        updateDownloadButtonVisibility();
       }
     } catch (error) {
       console.error("Error archiving courses:", error);
@@ -204,6 +214,7 @@ const app = (() => {
     }
 
     hideLoadingScreen();
+    updateDownloadButtonVisibility();
   };
 
   return { init };

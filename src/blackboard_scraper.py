@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def log_into_blackboard(driver, username, password):
-    driver.set_page_load_timeout(5)
+    driver.set_page_load_timeout(1)
 
     try:
         driver.get("https://blackboard.kettering.edu/")
@@ -42,17 +42,29 @@ def log_into_blackboard(driver, username, password):
             EC.presence_of_element_located((By.CSS_SELECTOR, "#loginForm")))
 
         try:
-            cookies_button = WebDriverWait(driver, 1).until(
+            cookies_button = WebDriverWait(driver, 3).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "#agree_button")))
             cookies_button.click()
         except TimeoutException:
             pass  # Cookie button not found or not clickable
 
     except TimeoutException:
-        return "Login failed: Timeout reached."
+        error_message_element = driver.find_element(
+            By.CSS_SELECTOR, "#loginForm > div:nth-child(2) > div")
+        error_message = error_message_element.text.strip()
+        if error_message:
+            return f"Login failed: {error_message}"
+        else:
+            return "Login failed: Timeout reached."
 
-    except (NoSuchElementException, Exception) as e:
-        return f"Error during login: {e}"
+    except NoSuchElementException:
+        error_message_element = driver.find_element(
+            By.CSS_SELECTOR, "#loginForm > div:nth-child(2) > div")
+        error_message = error_message_element.text.strip()
+        if error_message:
+            return f"Login failed: {error_message}"
+        else:
+            return "Login failed, but no specific error message found."
 
     return driver  # Return the logged-in driver
 
