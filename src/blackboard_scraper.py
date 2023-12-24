@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def log_into_blackboard(driver, username, password):
-    driver.set_page_load_timeout(1)
+    driver.set_page_load_timeout(3)
 
     try:
         driver.get("https://blackboard.kettering.edu/")
@@ -26,7 +26,7 @@ def log_into_blackboard(driver, username, password):
         if check_logged_in(driver, wait_time=1):
             return driver  # User is already logged in
 
-        WebDriverWait(driver, 1).until(
+        WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#loginForm")))
 
         username_field = driver.find_element(By.CSS_SELECTOR, "#inputUserID")
@@ -38,7 +38,7 @@ def log_into_blackboard(driver, username, password):
         password_field.send_keys(password)
         login_button.click()
 
-        WebDriverWait(driver, 1).until_not(
+        WebDriverWait(driver, 3).until_not(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#loginForm")))
 
         try:
@@ -69,7 +69,7 @@ def log_into_blackboard(driver, username, password):
     return driver  # Return the logged-in driver
 
 
-def check_logged_in(driver, wait_time=1):
+def check_logged_in(driver, wait_time):
     try:
         WebDriverWait(driver, wait_time).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#globalNavPageNavArea > table")))
