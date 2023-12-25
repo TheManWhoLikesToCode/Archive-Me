@@ -50,6 +50,10 @@ def index():
 def demo():
     return render_template('demo.html')
 
+@app.route('/directory')
+def directory():
+    return render_template('directory.html')
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -104,6 +108,28 @@ def download(file_key):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/directory/<path:path>')
+def list_directory(path):
+    print("Requested Path:", path)  # Debugging print statement
+
+    base_dir = '/Users/blackhat/Documents/GitHub/Blackboard-Scraper/docs'
+    abs_path = os.path.join(base_dir, path)
+
+    if os.path.exists(abs_path):
+        if os.path.isdir(abs_path):
+            items = os.listdir(abs_path)
+            return render_template('directory.html', items=items, path=path)
+        else:
+            # Handle file download if the path is a file
+            return send_from_directory(base_dir, path, as_attachment=True)
+    else:
+        return "Path does not exist", 404
+
+@app.route('/directory/')
+@app.route('/directory')
+def docs_root():
+    return list_directory('')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])

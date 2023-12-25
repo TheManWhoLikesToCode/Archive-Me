@@ -1,5 +1,5 @@
 from selenium import webdriver
-from blackboard_scraper import log_into_blackboard, scrape_content_from_blackboard, scrape_grades_from_blackboard, download_and_zip_content, clean_up_files
+from blackboard_scraper import log_into_blackboard, scrape_content_from_blackboard, scrape_grades_from_blackboard, download_and_zip_content
 from config import chrome_options
 from file_management import clean_up_files
 import ray
@@ -8,7 +8,10 @@ import ray
 # driver = webdriver.Chrome(options=chrome_options)
 
 # * Log Into Blackboard
-# driver = log_into_blackboard(driver, username, password)
+# log_into_blackboard(driver, username, password)
+
+# * Get Instructors
+# instructors = get_instructors(driver)
 
 # * Function To Download All Files From Blackboard
 # Time = 45 Seconds
@@ -23,7 +26,7 @@ import ray
 # * Clean up files
 # Pre - 204.7 MB
 # 5 folders - 140.1 MB
-# clean_up_files()
+clean_up_files()
 
 # Close the WebDriver
 # driver.quit()

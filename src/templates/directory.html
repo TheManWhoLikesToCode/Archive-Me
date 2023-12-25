@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Directory Listing</title>
+</head>
+<body>
+    <h1>Directory Listing for {{ path }}</h1>
+    {% if path %}
+        <a href="/directory/">Go Back</a>
+    {% endif %}
+    <ul>
+        {% for item in items %}
+            <li>
+                {% if path %}
+                    <a href="{{ url_for('list_directory', path=path + '/' + item) }}">{{ item }}</a>
+                {% else %}
+                    <a href="{{ url_for('list_directory', path=item) }}">{{ item }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

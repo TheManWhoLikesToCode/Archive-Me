@@ -77,6 +77,198 @@ def check_logged_in(driver, wait_time):
     except TimeoutException:
         return False
 
+
+def enable_instructors(driver):
+    try:
+        # Clicking the initial element
+        element = driver.find_element(
+            By.CSS_SELECTOR, "#module_4_1 > div.edit_controls > a")
+        element.click()
+
+        # Waiting for the table to load
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (By.ID, "blockAttributes_table_jsListFULL_Student_35314_1_body"))
+        )
+
+        # Counting the number of rows in the table
+        rows = driver.find_elements(
+            By.CSS_SELECTOR, "#blockAttributes_table_jsListFULL_Student_35314_1_body > tr")
+        num_rows = len(rows)
+
+        # Iterating over each row and setting checkboxes to true
+        for i in range(num_rows):
+            try:
+                checkbox = driver.find_element(
+                    By.ID, f"amc.showinstructors._51671_{i + 1}")
+                if not checkbox.is_selected():
+                    checkbox.click()
+            except NoSuchElementException:
+                print(f"Checkbox for row {i} not found.")
+
+        # Clicking the submit button
+        submit_button = driver.find_element(By.CSS_SELECTOR, "#bottom_Submit")
+        submit_button.click()
+
+    except NoSuchElementException as e:
+        print(f"Element not found: {e}")
+    except TimeoutException as e:
+        print(f"Timeout waiting for element: {e}")
+
+
+@ray.remote
+def download_and_save_file(course_name, assignment_name, url, cookies):
+    os.makedirs(course_name, exist_ok=True)
+
+    with requests.Session() as s:
+        s.cookies.update(cookies)
+        response = s.get(url)
+
+    content_type = response.headers.get('Content-Type')
+    guessed_extension = mimetypes.guess_extension(content_type)
+
+    # Extract current extension from assignment_name
+    name, current_extension = os.path.splitext(assignment_name)
+
+    # Determine if the current extension is appropriate
+    if current_extension:
+        mime_of_current_extension = mimetypes.guess_type(assignment_name)[0]
+        if mime_of_current_extension == content_type:
+            extension = current_extension  # Current extension is correct
+        else:
+            # Replace with guessed or keep current
+            extension = guessed_extension or current_extension
+    else:
+        # Check for HTML content before defaulting to .bin
+        if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
+            extension = '.html'
+        else:
+            # Default to .bin if no extension is guessed
+            extension = guessed_extension or '.bin'
+
+    # Adjust file name
+    file_path = os.path.join(course_name, name + extension)
+
+    with open(file_path, "wb") as f:
+        f.write(response.content)
+
+
+def get_cookies(driver):
+    return {cookie['name']: cookie['value'] for cookie in driver.get_cookies()}
+
+
+def scrape_content_from_blackboard(driver):
+    # Enable Instructors
+    enable_instructors(driver)
+    # Assuming this function logs into Blackboard
+    html = driver.page_source
+    soup = BeautifulSoup(html, "html.parser")
+
+    try:
+        div_4_1 = soup.find("div", id="div_4_1")
+        courses_list = div_4_1.find_all("ul")[0].find_all("li")
+    except Exception as e:
+        print(f"Error finding course list: {e}")
+        return
+
+    hrefs = {course.text.strip(): course.find("a")["href"].strip()
+             for course in courses_list if course.find("a") and course.find("a").get("href")}
+
+    # New code for handling instructors
+    for course in courses_list:
+        try:
+            instructor_name = course.find("div").find("span", class_="name").text.strip()
+            last_name = instructor_name.split()[-1].rstrip(';')
+
+            # Extract course details
+            course_code = re.search(r'\(([A-Z]{2}-\d{3}-\d{2}L?)\)', course.text)
+            if course_code:
+                course_code = course_code.group(1)
+                # Extract season and year
+                season_year_match = re.search(r'(Fall|Spring|Summer|Winter)\s+\d{4}', course.text)
+                if season_year_match:
+                    season_year = season_year_match.group()
+                    # Format course name
+                    formatted_course_name = f"{course_code}, {last_name}, {season_year}"
+                    # Add formatted course name to hrefs dictionary
+                    hrefs[formatted_course_name] = hrefs.pop(course.text.strip())
+        except Exception as e:
+            print(f"Error processing instructor for course {course.text.strip()}: {e}")
+            continue
+
+    cookies = get_cookies(driver)
+    download_tasks = []
+
+    for course, href in hrefs.items():
+        course_name = re.sub(r'[\\/:*?"<>|]', '', course.strip("\n"))
+        full_url = "https://kettering.blackboard.com" + href
+        driver.get(full_url)
+        driver.implicitly_wait(10)  # Consider explicit waits here
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        menu_puller_a = driver.find_element(By.ID, "menuPuller")
+        menu_puller_a.click()
+        driver.implicitly_wait(10)
+        menuWrap = soup.find("div", id="menuWrap")
+        course_menu = menuWrap.find("ul", class_="courseMenu")
+
+        for li in course_menu.find_all("li"):
+            try:
+                href = li.find("a")["href"]
+                if href[0] != "/":
+                    continue
+                full_url = "https://kettering.blackboard.com" + href
+                driver.get(full_url)
+                driver.implicitly_wait(10)
+                current_page = BeautifulSoup(driver.page_source, "html.parser")
+                content_listContainer = current_page.find(
+                    'ul', {'id': 'content_listContainer', 'class': 'contentListPlain'})
+
+                if content_listContainer:
+                    for li in content_listContainer.find_all('li'):
+                        assignment_name = re.sub(
+                            r'[\\/:*?"<>|]', '_', li.text.strip().split("\n")[0] or "Untitled")
+                        a = li.select_one('a')
+                        if a and a['href'][0] != "h":
+                            full_url = "https://kettering.blackboard.com" + \
+                                a['href']
+                            download_tasks.append(download_and_save_file.remote(
+                                course_name, assignment_name, full_url, cookies))
+            except Exception as e:
+                continue
+
+    # Wait for all downloads to complete
+    ray.get(download_tasks)
+
+
+def download_and_zip_content(driver, username):
+    """
+    Scrape the content from Blackboard and zip it.
+
+    Args:
+        driver: Selenium WebDriver instance.
+        username (str): The username for the Blackboard account.
+        password (str): The password for the Blackboard account.
+
+    Returns:
+        str: The path of the created zip file.
+    """
+
+    # Scrape the content from Blackboard
+    scrape_content_from_blackboard(
+        driver)
+
+    zip_file_path = username + '_downloaded_content.zip'
+    with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+        for root, dirs, files in os.walk('.'):
+            for file in files:
+                # Add other file types if needed
+                if file.endswith('.pdf') or file.endswith('.docx'):
+                    zipf.write(os.path.join(root, file))
+
+    # Return the path of the zip file
+    return zip_file_path
+
+
 # * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
 def get_grades_page_links(driver):
     """
@@ -283,131 +475,3 @@ def scrape_grades_from_blackboard(driver):
     # Close the browser
     driver.close()
 
-
-@ray.remote
-def download_and_save_file(course_name, assignment_name, url, cookies):
-    os.makedirs(course_name, exist_ok=True)
-
-    with requests.Session() as s:
-        s.cookies.update(cookies)
-        response = s.get(url)
-
-    content_type = response.headers.get('Content-Type')
-    guessed_extension = mimetypes.guess_extension(content_type)
-
-    # Extract current extension from assignment_name
-    name, current_extension = os.path.splitext(assignment_name)
-
-    # Determine if the current extension is appropriate
-    if current_extension:
-        mime_of_current_extension = mimetypes.guess_type(assignment_name)[0]
-        if mime_of_current_extension == content_type:
-            extension = current_extension  # Current extension is correct
-        else:
-            # Replace with guessed or keep current
-            extension = guessed_extension or current_extension
-    else:
-        # Check for HTML content before defaulting to .bin
-        if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
-            extension = '.html'
-        else:
-            # Default to .bin if no extension is guessed
-            extension = guessed_extension or '.bin'
-
-    # Adjust file name
-    file_path = os.path.join(course_name, name + extension)
-
-    with open(file_path, "wb") as f:
-        f.write(response.content)
-
-
-def get_cookies(driver):
-    return {cookie['name']: cookie['value'] for cookie in driver.get_cookies()}
-
-
-def scrape_content_from_blackboard(driver):
-    # Assuming this function logs into Blackboard
-    html = driver.page_source
-    soup = BeautifulSoup(html, "html.parser")
-
-    try:
-        div_4_1 = soup.find("div", id="div_4_1")
-        courses = div_4_1.find_all("ul")[0]
-    except Exception as e:
-        print(e)
-        return
-
-    hrefs = {course.text.strip(): course.find("a")["href"].strip(
-    ) for course in courses.find_all("li") if course.find("a")["href"]}
-
-    cookies = get_cookies(driver)
-    download_tasks = []
-
-    for course, href in hrefs.items():
-        course_name = re.sub(r'[\\/:*?"<>|]', '', course.strip("\n"))
-        full_url = "https://kettering.blackboard.com" + href
-        driver.get(full_url)
-        driver.implicitly_wait(10)  # Consider explicit waits here
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        menu_puller_a = driver.find_element(By.ID, "menuPuller")
-        menu_puller_a.click()
-        driver.implicitly_wait(10)
-        menuWrap = soup.find("div", id="menuWrap")
-        course_menu = menuWrap.find("ul", class_="courseMenu")
-
-        for li in course_menu.find_all("li"):
-            try:
-                href = li.find("a")["href"]
-                if href[0] != "/":
-                    continue
-                full_url = "https://kettering.blackboard.com" + href
-                driver.get(full_url)
-                driver.implicitly_wait(10)
-                current_page = BeautifulSoup(driver.page_source, "html.parser")
-                content_listContainer = current_page.find(
-                    'ul', {'id': 'content_listContainer', 'class': 'contentListPlain'})
-
-                if content_listContainer:
-                    for li in content_listContainer.find_all('li'):
-                        assignment_name = re.sub(
-                            r'[\\/:*?"<>|]', '_', li.text.strip().split("\n")[0] or "Untitled")
-                        a = li.select_one('a')
-                        if a and a['href'][0] != "h":
-                            full_url = "https://kettering.blackboard.com" + \
-                                a['href']
-                            download_tasks.append(download_and_save_file.remote(
-                                course_name, assignment_name, full_url, cookies))
-            except Exception as e:
-                continue
-
-    # Wait for all downloads to complete
-    ray.get(download_tasks)
-
-
-def download_and_zip_content(driver, username):
-    """
-    Scrape the content from Blackboard and zip it.
-
-    Args:
-        driver: Selenium WebDriver instance.
-        username (str): The username for the Blackboard account.
-        password (str): The password for the Blackboard account.
-
-    Returns:
-        str: The path of the created zip file.
-    """
-
-    # Scrape the content from Blackboard
-    scrape_content_from_blackboard(
-        driver)
-
-    zip_file_path = username + '_downloaded_content.zip'
-    with zipfile.ZipFile(zip_file_path, 'w') as zipf:
-        for root, dirs, files in os.walk('.'):
-            for file in files:
-                # Add other file types if needed
-                if file.endswith('.pdf') or file.endswith('.docx'):
-                    zipf.write(os.path.join(root, file))
-
-    # Return the path of the zip file
-    return zip_file_path
