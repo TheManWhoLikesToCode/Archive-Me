@@ -4,3 +4,4 @@ flask
 ray
 argparse
 bs4
+gunicorn
