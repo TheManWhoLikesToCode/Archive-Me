@@ -3,7 +3,7 @@ from selenium.webdriver.chrome.options import Options
 
 # Flask configuration
 DEBUG = True  # Set to False in production
-PORT = 5000  # Port number for the Flask server
+PORT = 5001  # Port number for the Flask server
 
 # Selenium configuration
 CHROME_DRIVER_PATH = 'support/chromedriver_mac64/chromedriver'  # Path to the ChromeDriver executable

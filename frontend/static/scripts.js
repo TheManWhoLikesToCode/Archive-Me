@@ -124,7 +124,7 @@ const app = (() => {
     showLoadingScreen();
 
     try {
-      const response = await fetchWithErrorHandler("/login", {
+      const response = await fetchWithErrorHandler("http://10.0.0.162:5001/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -150,7 +150,7 @@ const app = (() => {
     showLoadingScreen();
     try {
       console.log("Archiving courses...");
-      const response = await fetchWithErrorHandler("/scrape", {
+      const response = await fetchWithErrorHandler("http://10.0.0.162:5001/scrape", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
@@ -178,7 +178,7 @@ const app = (() => {
     try {
       console.log("Downloading file...");
       const baseUrl = window.location.origin;
-      const downloadUrl = `${baseUrl}/download/${encodeURIComponent(fileKeyGlobal)}`;
+      const downloadUrl = `http://10.0.0.162:5001/download/${encodeURIComponent(fileKeyGlobal)}`;
       const response = await fetchWithErrorHandler(downloadUrl);
 
       const blob = await response.blob();

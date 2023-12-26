@@ -3,13 +3,14 @@ from selenium import webdriver
 from blackboard_scraper import log_into_blackboard, download_and_zip_content
 from file_management import clean_up_files
 from config import chrome_options
+import config
 import os
 import logging
 
 app = Flask(__name__)
 
 # Configuration
-app.config.from_pyfile('config.py')  # External configuration file
+app.config.from_pyfile(config.__file__)
 
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
@@ -39,21 +40,6 @@ class ScraperService:
 
 
 scraper_service = ScraperService()
-
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
-@app.route('/demo')
-def demo():
-    return render_template('demo.html')
-
-@app.route('/directory')
-def directory():
-    return render_template('directory.html')
-
 
 @app.route('/login', methods=['POST'])
 def login():
