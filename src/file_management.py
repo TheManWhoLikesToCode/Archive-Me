@@ -19,7 +19,7 @@ def clean_up_files():
     for item in os.listdir():
         if os.path.isdir(item) and item not in excluded_folders:
             source_path = item
-            dest_path = os.path.join('docs', item)
+            dest_path = os.path.join('.docs', item)
 
             if not os.path.exists(dest_path):
                 shutil.move(source_path, dest_path)
@@ -43,7 +43,7 @@ def clean_up_files():
 
             print(f"Processed {item}")
 
-    print("Folders merged into 'docs' successfully.")
+    print("Folders merged into '.docs' successfully.")
 
     if os.path.exists('downloaded_content.zip'):
         os.remove('downloaded_content.zip')
