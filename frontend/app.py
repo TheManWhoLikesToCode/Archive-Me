@@ -5,9 +5,7 @@ import logging
 import config
 
 app = Flask(__name__)
-
-# Apply CORS to the whole app with specific origin
-CORS(app, resources={r"/login": {"origins": "http://127.0.0.1:5002"}})
+cors = CORS(app)
 
 # Configuration
 app.config.from_pyfile(config.__file__)
@@ -16,20 +14,23 @@ app.config.from_pyfile(config.__file__)
 logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
+@cross_origin()
 def index():
     return render_template('index.html')
 
 @app.route('/demo')
+@cross_origin()
 def demo():
     return render_template('demo.html')
 
 @app.route('/directory')
+@cross_origin()
 def directory():
     return render_template('directory.html')
 
 # Add a login route for demonstration
 @app.route('/login', methods=['POST'])
-@cross_origin(origin='http://127.0.0.1:5002', headers=['Content-Type', 'Authorization'])
+@cross_origin()
 def login():
     # Your login logic here
     return jsonify(success=True)

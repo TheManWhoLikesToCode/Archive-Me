@@ -1,20 +1,23 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, abort
-from selenium import webdriver
-from blackboard_scraper import log_into_blackboard, download_and_zip_content
-from file_management import clean_up_files
-from config import chrome_options
-import config
 import os
 import logging
+from flask import Flask, render_template, request, jsonify, send_from_directory, abort
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from blackboard_scraper import log_into_blackboard, download_and_zip_content
+from file_management import clean_up_files
+from flask_cors import CORS, cross_origin 
+from config import chrome_options
+import config
 
 app = Flask(__name__)
+cors = CORS(app)
 
 # Configuration
 app.config.from_pyfile(config.__file__)
 
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
-
 
 class ScraperService:
     def __init__(self):
@@ -23,7 +26,9 @@ class ScraperService:
 
     def initialize_driver(self):
         if not self.driver:
-            self.driver = webdriver.Chrome(options=chrome_options)
+            service = Service(ChromeDriverManager().install())
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+
 
     def login(self, username, password):
         self.initialize_driver()
@@ -42,6 +47,7 @@ class ScraperService:
 scraper_service = ScraperService()
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login():
     data = request.json
     username = data.get('username')
@@ -81,6 +87,7 @@ def scrape():
 
 
 @app.route('/download/<file_key>', methods=['GET'])
+@cross_origin()
 def download(file_key):
     """
     Download a file by its file key.
@@ -96,6 +103,7 @@ def download(file_key):
 
 
 @app.route('/directory/<path:path>')
+@cross_origin()
 def list_directory(path):
     print("Requested Path:", path)  # Debugging print statement
 
