@@ -118,7 +118,11 @@ def enable_instructors(driver):
 
 @ray.remote
 def download_and_save_file(course_name, assignment_name, url, cookies):
-    os.makedirs(course_name, exist_ok=True)
+    # Define the base directory for 'Session Files'
+    base_directory = os.path.join('backend', 'Session Files', course_name)
+
+    # Create the directory if it doesn't exist
+    os.makedirs(base_directory, exist_ok=True)
 
     with requests.Session() as s:
         s.cookies.update(cookies)
@@ -146,11 +150,12 @@ def download_and_save_file(course_name, assignment_name, url, cookies):
             # Default to .bin if no extension is guessed
             extension = guessed_extension or '.bin'
 
-    # Adjust file name
-    file_path = os.path.join(course_name, name + extension)
+    # Adjust file name and save in the 'Session Files' directory
+    file_path = os.path.join(base_directory, name + extension)
 
     with open(file_path, "wb") as f:
         f.write(response.content)
+    print(f"File saved to {file_path}")
 
 
 def get_cookies(driver):
