@@ -2,13 +2,9 @@ import os
 import shutil
 from pdf_compressor import compress
 
-def clean_up_files():
-    excluded_folders = ['src', 'docs', 'support', '.vscode', '.git']
 
-    # Compress PDFs
-    for root, dirs, files in os.walk('.'):
-        # Exclude specified folders
-        dirs[:] = [d for d in dirs if d not in excluded_folders]
+def compress_pdfs(path):
+    for root, dirs, files in os.walk(path):
         for file in files:
             if file.endswith('.pdf'):
                 file_path = os.path.join(root, file)
@@ -16,43 +12,60 @@ def clean_up_files():
                 compress(file_path, compressed_file_path, power=4)
                 os.remove(file_path)
 
-    for item in os.listdir():
-        if os.path.isdir(item) and item not in excluded_folders:
-            source_path = item
-            dest_path = os.path.join('.docs', item)
 
-            if not os.path.exists(dest_path):
-                shutil.move(source_path, dest_path)
+def clean_up_session_files(compress_files):
+    current_dir = os.getcwd()
+
+    # Determine the session_files_path based on the current directory
+    if os.path.basename(current_dir) != 'backend':
+        session_files_path = os.path.join(current_dir, 'backend', 'Session Files')
+        docs_path = os.path.join(current_dir, 'backend', 'docs')
+    else:
+        session_files_path = os.path.join(current_dir, 'Session Files')
+        docs_path = os.path.join(current_dir, 'docs')
+
+    if compress_files:
+        # Compress PDFs within the session files path
+        compress_pdfs(session_files_path)
+
+    for item in os.listdir(session_files_path):
+        source_item_path = os.path.join(session_files_path, item)
+        dest_item_path = os.path.join(docs_path, item)
+
+        if os.path.isdir(source_item_path):
+            if not os.path.exists(dest_item_path):
+                shutil.move(source_item_path, dest_item_path)
             else:
-                for sub_item in os.listdir(source_path):
-                    source_sub_item = os.path.join(source_path, sub_item)
-                    dest_sub_item = os.path.join(dest_path, sub_item)
+                for sub_item in os.listdir(source_item_path):
+                    source_sub_item = os.path.join(source_item_path, sub_item)
+                    dest_sub_item = os.path.join(dest_item_path, sub_item)
 
                     if os.path.isdir(source_sub_item):
                         if not os.path.exists(dest_sub_item):
                             shutil.move(source_sub_item, dest_sub_item)
                         else:
-                            # Remove existing directory before moving
                             shutil.rmtree(dest_sub_item)
                             shutil.move(source_sub_item, dest_sub_item)
                     elif os.path.isfile(source_sub_item) and not os.path.exists(dest_sub_item):
                         shutil.move(source_sub_item, dest_sub_item)
 
-                if not os.listdir(source_path):  # Check if directory is now empty
-                    shutil.rmtree(source_path)  # Safe to remove
+                # If the source directory is now empty, remove it
+                if not os.listdir(source_item_path):
+                    shutil.rmtree(source_item_path)
 
             print(f"Processed {item}")
 
-    print("Folders merged into '.docs' successfully.")
+    print("Folders merged into 'docs' successfully.")
 
-    if os.path.exists('downloaded_content.zip'):
-        os.remove('downloaded_content.zip')
 
-    # Delete remaining folders
-    for folder in os.listdir():
-        if os.path.isdir(folder) and folder not in excluded_folders:
-            shutil.rmtree(folder)
+def delete_session_files():
+    current_dir = os.getcwd()
 
-    print("Remaining folders deleted.")
+    # Check if the current directory ends with 'backend'. If not, append 'backend' to the path
+    if os.path.basename(current_dir) != 'backend':
+        session_files_path = os.path.join(current_dir, 'backend', 'Session Files')
+    else:
+        session_files_path = os.path.join(current_dir, 'Session Files')
 
-    print("Clean-up completed.")
+    shutil.rmtree(session_files_path)
+    print("Session files deleted successfully.")
