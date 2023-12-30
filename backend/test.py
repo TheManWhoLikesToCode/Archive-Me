@@ -1,8 +1,21 @@
-from selenium import webdriver
-from blackboard_scraper import log_into_blackboard, scrape_content_from_blackboard, scrape_grades_from_blackboard, download_and_zip_content
+import ray
+from blackboard_scraper import (
+    download_and_zip_content,
+    log_into_blackboard,
+    scrape_content_from_blackboard,
+    scrape_grades_from_blackboard,
+)
 from config import chrome_options
 from file_management import clean_up_session_files, delete_session_files
-import ray
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
+from selenium import webdriver
+
+gauth = GoogleAuth()
+gauth.LocalWebserverAuth()
+drive = GoogleDrive(gauth)
+
+team_drive_id = '0AFReXfsUal4rUk9PVA'
 
 # ray.init()
 # driver = webdriver.Chrome(options=chrome_options)
@@ -31,5 +44,5 @@ import ray
 # * Delete session files
 # delete_session_files()
 
-# Close the WebDriver
+# * Close the WebDriver
 # driver.quit()
