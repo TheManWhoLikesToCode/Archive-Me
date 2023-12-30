@@ -1,14 +1,16 @@
 import os
 import logging
 from flask import Flask, render_template, request, jsonify, send_from_directory, abort
+from flask_cors import CORS, cross_origin
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 from blackboard_scraper import log_into_blackboard, download_and_zip_content
-from file_management import clean_up_files
-from flask_cors import CORS, cross_origin 
-from config import chrome_options
+from file_management import find_folder_id, list_files_in_drive_folder
 import config
+from config import chrome_options
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -16,8 +18,17 @@ cors = CORS(app)
 # Configuration
 app.config.from_pyfile(config.__file__)
 
+print("Starting Flask server on port", app.config['PORT'])
+
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
+
+gauth = GoogleAuth()
+gauth.LocalWebserverAuth()
+drive = GoogleDrive(gauth)
+
+team_drive_id = '0AFReXfsUal4rUk9PVA'
+
 
 class ScraperService:
     def __init__(self):
@@ -27,8 +38,8 @@ class ScraperService:
     def initialize_driver(self):
         if not self.driver:
             service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
-
+            self.driver = webdriver.Chrome(
+                service=service, options=chrome_options)
 
     def login(self, username, password):
         self.initialize_driver()
@@ -45,6 +56,7 @@ class ScraperService:
 
 
 scraper_service = ScraperService()
+
 
 @app.route('/login', methods=['POST'])
 @cross_origin()
@@ -101,29 +113,26 @@ def download(file_key):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
+@app.route('/directory/', defaults={'path': None})
 @app.route('/directory/<path:path>')
 @cross_origin()
 def list_directory(path):
-    print("Requested Path:", path)  # Debugging print statement
+    print("Requested Path:", path)  
+    
+    if path is None:
+        path = team_drive_id
+    items = list_files_in_drive_folder(drive, path, team_drive_id)
+    return jsonify(items)
 
-    base_dir = '/Users/blackhat/Documents/GitHub/Blackboard-Scraper/docs'
-    abs_path = os.path.join(base_dir, path)
 
-    if os.path.exists(abs_path):
-        if os.path.isdir(abs_path):
-            items = os.listdir(abs_path)
-            return render_template('directory.html', items=items, path=path)
-        else:
-            # Handle file download if the path is a file
-            return send_from_directory(base_dir, path, as_attachment=True)
-    else:
-        return "Path does not exist", 404
-
-@app.route('/directory/')
 @app.route('/directory')
+def list_root_directory():
+    return list_directory(None)
+
+
 def docs_root():
-    return list_directory('')
+    return list_directory(None)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])

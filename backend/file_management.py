@@ -4,7 +4,6 @@ from pdf_compressor import compress
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
-
 def compress_pdfs(path):
     for root, dirs, files in os.walk(path):
         for file in files:
@@ -178,3 +177,13 @@ def update_drive_directory(drive, local_docs_path, team_drive_id):
                             drive, drive_folder_id, local_file_path, team_drive_id)
             else:
                 upload_folder(drive, local_folder_path, team_drive_id)
+
+def list_files_in_drive_folder(drive, folder_id, team_drive_id):
+    query = f"'{folder_id}' in parents and trashed=false"
+    if team_drive_id:
+        file_list = drive.ListFile({'q': query, 'supportsTeamDrives': True, 'includeTeamDriveItems': True,
+                                   'corpora': 'teamDrive', 'teamDriveId': team_drive_id}).GetList()
+    else:
+        file_list = drive.ListFile({'q': query}).GetList()
+
+    return [(file['title'], file['mimeType'], file['id']) for file in file_list]
