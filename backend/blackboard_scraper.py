@@ -118,9 +118,18 @@ def enable_instructors(driver):
 
 @ray.remote
 def download_and_save_file(course_name, assignment_name, url, cookies):
-    # Define the base directory for 'Session Files'
-    base_directory = os.path.join('backend', 'Session Files', course_name)
+    
+    # Determine the session_files_path based on the current directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(current_dir) != 'backend':
+        session_files_path = os.path.join(current_dir, 'backend', 'Session Files')
+        docs_path = os.path.join(current_dir, 'backend', 'docs')
+    else:
+        session_files_path = os.path.join(current_dir, 'Session Files')
+        docs_path = os.path.join(current_dir, 'docs')
 
+    # Define the base directory for 'Session Files'
+    base_directory = os.path.join(session_files_path, course_name)
     # Create the directory if it doesn't exist
     os.makedirs(base_directory, exist_ok=True)
 
