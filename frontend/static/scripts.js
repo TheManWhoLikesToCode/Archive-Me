@@ -135,7 +135,14 @@ const app = (() => {
           password: password,
         }),
       });
-      const message = await response.text();
+      const data = await response.json();
+      const message = data.message || 'Error occurred';
+      responseContainer.textContent = message;
+  
+      // Store username in session storage if login is successful
+      if (response.ok) {
+        sessionStorage.setItem("user", JSON.stringify({ username: username }));
+      }
       responseContainer.textContent = message;
       responseContainer.classList.add("alert-success");
     } catch (error) {
@@ -151,10 +158,24 @@ const app = (() => {
     showLoadingScreen();
     try {
       console.log("Archiving courses...");
-      const response = await fetchWithErrorHandler("http://127.0.0.1:5001/scrape", {
+      // Retrieve user data from session storage
+      const user = JSON.parse(sessionStorage.getItem("user"));
+  
+      if (!user || !user.username) {
+        console.error("User information not available for archiving courses");
+        alert("User information is required.");
+        return; // Exit the function if user information is not available
+      }
+  
+      console.log("User:", user.username);
+  
+      const url = `http://127.0.0.1:5001/scrape?username=${encodeURIComponent(user.username)}`;
+  
+      const response = await fetchWithErrorHandler(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
+  
       const data = await response.json();
       if (data.file_key) {
         fileKeyGlobal = data.file_key;
@@ -223,7 +244,7 @@ const app = (() => {
       alert('Error updating directory list: ' + error.message);
     }
   };
-  
+
 
   const updateBackButtonVisibility = () => {
     if (currentPath) {
@@ -238,7 +259,7 @@ const app = (() => {
     updateBackButtonVisibility();
     updateDirectoryList(newPath);
   };
-  
+
 
   $('#back').on('click', function (event) {
     event.preventDefault();

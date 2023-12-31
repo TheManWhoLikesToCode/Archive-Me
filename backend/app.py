@@ -32,27 +32,30 @@ team_drive_id = '0AFReXfsUal4rUk9PVA'
 
 class ScraperService:
     def __init__(self):
-        self.driver = None
-        self.current_username = None
+        self.drivers = {}  # Dictionary to hold drivers for each user
 
-    def initialize_driver(self):
-        if not self.driver:
+    def initialize_driver(self, username):
+        if username not in self.drivers:
             service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(
-                service=service, options=chrome_options)
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            self.drivers[username] = driver
+        return self.drivers[username]
 
     def login(self, username, password):
-        self.initialize_driver()
-        return log_into_blackboard(self.driver, username, password)
+        driver = self.initialize_driver(username)
+        return log_into_blackboard(driver, username, password)
 
-    def scrape(self):
-        return download_and_zip_content(self.driver, self.current_username)
+    def scrape(self, username):
+        driver = self.drivers.get(username)
+        if driver:
+            return download_and_zip_content(driver, username)
+        else:
+            raise Exception("User not logged in or session expired")
 
-    def reset(self):
-        if self.driver:
-            self.driver.quit()
-        self.driver = None
-        self.current_username = None
+    def reset(self, username):
+        driver = self.drivers.pop(username, None)
+        if driver:
+            driver.quit()
 
 
 scraper_service = ScraperService()
@@ -69,24 +72,25 @@ def login():
         return jsonify({'error': 'Missing username or password'}), 400
 
     try:
-        scraper_service.current_username = username
         result = scraper_service.login(username, password)
         if isinstance(result, str):
             return jsonify({'error': result}), 401
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    return "Logged in successfully"
+    return jsonify({'message': 'Logged in successfully'})
+
 
 
 @app.route('/scrape', methods=['GET'])
 def scrape():
-    if not scraper_service.current_username:
-        return jsonify({'error': 'User not logged in'}), 401
+    username = request.args.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
 
     try:
-        file_key = scraper_service.scrape()
-        scraper_service.reset()
+        file_key = scraper_service.scrape(username)
+        scraper_service.reset(username)
 
         file_path = os.path.join(os.getcwd(), file_key)
         if not file_key or not os.path.isfile(file_path):
@@ -94,7 +98,7 @@ def scrape():
 
         return jsonify({'file_key': file_key})
     except Exception as e:
-        scraper_service.reset()
+        scraper_service.reset(username)
         return jsonify({'error': str(e)}), 500
 
 
