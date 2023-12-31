@@ -23,7 +23,7 @@ def index():
 def demo():
     return render_template('demo.html')
 
-@app.route('/directory')
+@app.route('/directory/')
 @cross_origin()
 def directory():
     return render_template('directory.html')

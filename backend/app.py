@@ -113,8 +113,8 @@ def download(file_key):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/directory/', defaults={'path': None})
-@app.route('/directory/<path:path>')
+@app.route('/browse/', defaults={'path': None})
+@app.route('/browse/<path:path>')
 @cross_origin()
 def list_directory(path):
     print("Requested Path:", path)  
@@ -122,16 +122,13 @@ def list_directory(path):
     if path is None:
         path = team_drive_id
     items = list_files_in_drive_folder(drive, path, team_drive_id)
+
     return jsonify(items)
 
-
-@app.route('/directory')
+@app.route('/browse')
 def list_root_directory():
     return list_directory(None)
 
-
-def docs_root():
-    return list_directory(None)
 
 
 if __name__ == '__main__':

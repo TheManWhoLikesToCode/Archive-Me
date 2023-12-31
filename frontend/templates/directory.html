@@ -3,22 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Directory Listing</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Custom CSS (if any from your demo page) -->
+    <link rel="stylesheet" href="static/default.css">
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
-<body>
-    <h1>Directory Listing for {{ path }}</h1>
-    {% if path %}
-        <a href="/directory/">Go Back</a>
-    {% endif %}
-    <ul>
-        {% for item in items %}
-            <li>
-                {% if path %}
-                    <a href="{{ url_for('list_directory', path=path + '/' + item) }}">{{ item }}</a>
-                {% else %}
-                    <a href="{{ url_for('list_directory', path=item) }}">{{ item }}</a>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
+<body id="directoryPage">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="./">
+                <i class="fa fa-arrow-left mr-2"></i>Back to Demo
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>Directory Listing for <span id="path"></span></h1>
+        <ul id="directoryList" class="list-unstyled"></ul>
+    </div>
+
+    <script src="/static/scripts.js"></script>
 </body>
 </html>

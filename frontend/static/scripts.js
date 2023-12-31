@@ -82,6 +82,7 @@ $(function () {
 // Use a modular approach
 const app = (() => {
   let fileKeyGlobal = null;
+  let currentPath = '';
 
   const showLoadingScreen = () => {
     const loadingScreen = document.getElementById("loading-screen");
@@ -199,6 +200,54 @@ const app = (() => {
     }
   };
 
+  const updateDirectoryList = async (path) => {
+    try {
+      const data = await (await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`)).json();
+      $('#directoryList').empty();
+      $('#path').text(path || '/');
+      data.forEach(item => {
+        const li = $('<li>');
+        const link = $('<a>')
+          .attr('href', `#`) // Prevent default link behavior
+          .text(item[0]) // Display the course name
+          .click(async (event) => {
+            event.preventDefault(); // Prevent the default link behavior
+            // Fetch and display the contents of the clicked directory
+            await updateDirectoryList(item[2]);
+          });
+        li.append(link);
+        $('#directoryList').append(li);
+      });
+    } catch (error) {
+      console.error("Error updating directory list:", error);
+      alert('Error updating directory list: ' + error.message);
+    }
+  };
+  
+
+  const updateBackButtonVisibility = () => {
+    if (currentPath) {
+      $('#back').show();
+    } else {
+      $('#back').hide();
+    }
+  };
+
+  const onDirectoryChange = (newPath) => {
+    currentPath = newPath;
+    updateBackButtonVisibility();
+    updateDirectoryList(newPath);
+  };
+  
+
+  $('#back').on('click', function (event) {
+    event.preventDefault();
+    const pathSegments = currentPath.split('/').filter(Boolean);
+    pathSegments.pop();
+    onDirectoryChange(pathSegments.join('/'));
+  });
+
+
   const init = () => {
     const loginForm = document.querySelector("#loginForm");
     if (loginForm) {
@@ -212,9 +261,13 @@ const app = (() => {
     if (downloadButton) {
       downloadButton.addEventListener("click", downloadFile);
     }
+    if (document.getElementById('directoryList')) {
+      updateDirectoryList('');
+    }
 
     hideLoadingScreen();
     updateDownloadButtonVisibility();
+    updateDirectoryList('');
   };
 
   return { init };
