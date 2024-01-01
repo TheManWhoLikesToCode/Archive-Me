@@ -199,6 +199,7 @@ const app = (() => {
     showLoadingScreen();
     try {
       console.log("Downloading file...");
+      console.log(fileKeyGlobal)
       const baseUrl = window.location.origin;
       const downloadUrl = `http://127.0.0.1:5001/download/${encodeURIComponent(fileKeyGlobal)}`;
       const response = await fetchWithErrorHandler(downloadUrl);
@@ -221,42 +222,40 @@ const app = (() => {
     }
   };
 
-  const updateDirectoryList = async (path) => {
-    try {
-      const data = await (await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`)).json();
-      $('#directoryList').empty();
-      $('#path').text(path || '/');
-      data.forEach(item => {
-        const li = $('<li>');
-        const link = $('<a>')
-          .attr('href', `#`) // Prevent default link behavior
-          .text(item[0]) // Display the course name
-          .click(async (event) => {
-            event.preventDefault(); // Prevent the default link behavior
-            // Fetch and display the contents of the clicked directory
-            await updateDirectoryList(item[2]);
-          });
-        li.append(link);
-        $('#directoryList').append(li);
-      });
-    } catch (error) {
-      console.error("Error updating directory list:", error);
-      alert('Error updating directory list: ' + error.message);
-    }
-  };
+// Global variable to store the current directory name
+let currentDirectoryName = '/';
 
+const updateDirectoryList = async (path, directoryName = '/') => {
+  try {
+    const data = await (await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`)).json();
+    $('#directoryList').empty();
 
-  const updateBackButtonVisibility = () => {
-    if (currentPath) {
-      $('#back').show();
-    } else {
-      $('#back').hide();
-    }
-  };
+    // Update the global directory name
+    currentDirectoryName = directoryName;
+    $('#path').text(currentDirectoryName);
+
+    data.forEach(item => {
+      const li = $('<li>');
+      const link = $('<a>')
+        .attr('href', `#`)
+        .text(item[0]) // Display the course name
+        .click(async (event) => {
+          event.preventDefault();
+          // Pass both the ID and the name of the directory
+          await updateDirectoryList(item[2], item[0]);
+        });
+      li.append(link);
+      $('#directoryList').append(li);
+    });
+  } catch (error) {
+    console.error("Error updating directory list:", error);
+    alert('Error updating directory list: ' + error.message);
+  }
+};
+
 
   const onDirectoryChange = (newPath) => {
     currentPath = newPath;
-    updateBackButtonVisibility();
     updateDirectoryList(newPath);
   };
 
