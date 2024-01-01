@@ -1,3 +1,6 @@
+from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
+from config import chrome_options
+import config
 import os
 import logging
 import threading
@@ -9,9 +12,31 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from blackboard_scraper import log_into_blackboard, download_and_zip_content
-from file_management import list_files_in_drive_folder, is_file_valid, execute_post_download_operations
-import config
-from config import chrome_options
+
+
+def is_file_valid(file_path):
+    return os.path.isfile(file_path) and not os.path.islink(file_path)
+
+
+def remove_file_safely(file_path):
+    try:
+        if is_file_valid(file_path):
+            os.remove(file_path)
+    except OSError as error:
+        app.logger.error(f"Error removing file: {error}")
+
+
+def execute_post_download_operations(file_path):
+    remove_file_safely(file_path)
+
+    try:
+        clean_up_session_files(True)
+        delete_session_files()
+        update_drive_directory(drive, docs_folder, team_drive_id)
+        clean_up_docs_files()
+    except Exception as e:
+        app.logger.error(f"Error during post-download operations: {e}")
+
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -102,6 +127,7 @@ def scrape():
         scraper_service.reset(username)
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/download/<file_key>', methods=['GET'])
 @cross_origin()
 def download(file_key):
@@ -114,7 +140,8 @@ def download(file_key):
 
     @after_this_request
     def trigger_post_download_operations(response):
-        thread = threading.Thread(target=execute_post_download_operations, args=(file_path,))
+        thread = threading.Thread(
+            target=execute_post_download_operations, args=(file_path,))
         thread.start()
         return response
 

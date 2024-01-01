@@ -118,11 +118,12 @@ def enable_instructors(driver):
 
 @ray.remote
 def download_and_save_file(course_name, assignment_name, url, cookies):
-    
+
     # Determine the session_files_path based on the current directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
     if os.path.basename(current_dir) != 'backend':
-        session_files_path = os.path.join(current_dir, 'backend', 'Session Files')
+        session_files_path = os.path.join(
+            current_dir, 'backend', 'Session Files')
         docs_path = os.path.join(current_dir, 'backend', 'docs')
     else:
         session_files_path = os.path.join(current_dir, 'Session Files')
@@ -191,23 +192,28 @@ def scrape_content_from_blackboard(driver):
     # New code for handling instructors
     for course in courses_list:
         try:
-            instructor_name = course.find("div").find("span", class_="name").text.strip()
+            instructor_name = course.find("div").find(
+                "span", class_="name").text.strip()
             last_name = instructor_name.split()[-1].rstrip(';')
 
             # Extract course details
-            course_code = re.search(r'\(([A-Z]{2}-\d{3}-\d{2}L?)\)', course.text)
+            course_code = re.search(
+                r'\(([A-Z]{2}-\d{3}-\d{2}L?)\)', course.text)
             if course_code:
                 course_code = course_code.group(1)
                 # Extract season and year
-                season_year_match = re.search(r'(Fall|Spring|Summer|Winter)\s+\d{4}', course.text)
+                season_year_match = re.search(
+                    r'(Fall|Spring|Summer|Winter)\s+\d{4}', course.text)
                 if season_year_match:
                     season_year = season_year_match.group()
                     # Format course name
                     formatted_course_name = f"{course_code}, {last_name}, {season_year}"
                     # Add formatted course name to hrefs dictionary
-                    hrefs[formatted_course_name] = hrefs.pop(course.text.strip())
+                    hrefs[formatted_course_name] = hrefs.pop(
+                        course.text.strip())
         except Exception as e:
-            print(f"Error processing instructor for course {course.text.strip()}: {e}")
+            print(
+                f"Error processing instructor for course {course.text.strip()}: {e}")
             continue
 
     cookies = get_cookies(driver)
@@ -261,23 +267,32 @@ def download_and_zip_content(driver, username):
     Args:
         driver: Selenium WebDriver instance.
         username (str): The username for the Blackboard account.
-        password (str): The password for the Blackboard account.
 
     Returns:
         str: The path of the created zip file.
     """
 
     # Scrape the content from Blackboard
-    scrape_content_from_blackboard(
-        driver)
+    scrape_content_from_blackboard(driver)
 
-    zip_file_path = username + '_downloaded_content.zip'
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(current_dir) != 'backend':
+        session_files_path = os.path.join(
+            current_dir, 'backend', 'Session Files')
+    else:
+        session_files_path = os.path.join(current_dir, 'Session Files')
+
+    zip_file_path = os.path.join(
+        current_dir, username + '_downloaded_content.zip')
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
-        for root, dirs, files in os.walk('.'):
+        for root, dirs, files in os.walk(session_files_path):
             for file in files:
                 # Add other file types if needed
                 if file.endswith('.pdf') or file.endswith('.docx'):
-                    zipf.write(os.path.join(root, file))
+                    file_path = os.path.join(root, file)
+                    # Extract relative path for arcname to prevent full path in zip file
+                    arcname = os.path.relpath(file_path, session_files_path)
+                    zipf.write(file_path, arcname=arcname)
 
     # Return the path of the zip file
     return zip_file_path
@@ -488,4 +503,3 @@ def scrape_grades_from_blackboard(driver):
     generate_html(all_grades)
     # Close the browser
     driver.close()
-
