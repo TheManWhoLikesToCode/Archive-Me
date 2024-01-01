@@ -190,27 +190,3 @@ def list_files_in_drive_folder(drive, folder_id, team_drive_id):
         file_list = drive.ListFile({'q': query}).GetList()
 
     return [(file['title'], file['mimeType'], file['id']) for file in file_list]
-
-
-def is_file_valid(file_path):
-    return os.path.isfile(file_path) and not os.path.islink(file_path)
-
-
-def remove_file_safely(file_path):
-    try:
-        if is_file_valid(file_path):
-            os.remove(file_path)
-    except OSError as error:
-        app.logger.error(f"Error removing file: {error}")
-
-
-def execute_post_download_operations(file_path):
-    remove_file_safely(file_path)
-
-    try:
-        clean_up_session_files(True)
-        delete_session_files()
-        update_drive_directory(drive, docs_folder, team_drive_id)
-        clean_up_docs_files()
-    except Exception as e:
-        app.logger.error(f"Error during post-download operations: {e}")

@@ -269,7 +269,7 @@ def download_and_zip_content(driver, username):
         username (str): The username for the Blackboard account.
 
     Returns:
-        str: The path of the created zip file.
+        str: The relative path of the created zip file.
     """
 
     # Scrape the content from Blackboard
@@ -282,20 +282,18 @@ def download_and_zip_content(driver, username):
     else:
         session_files_path = os.path.join(current_dir, 'Session Files')
 
-    zip_file_path = os.path.join(
-        current_dir, username + '_downloaded_content.zip')
+    zip_file_name = username + '_downloaded_content.zip'
+    zip_file_path = os.path.join(current_dir, zip_file_name)
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
         for root, dirs, files in os.walk(session_files_path):
             for file in files:
-                # Add other file types if needed
                 if file.endswith('.pdf') or file.endswith('.docx'):
                     file_path = os.path.join(root, file)
-                    # Extract relative path for arcname to prevent full path in zip file
                     arcname = os.path.relpath(file_path, session_files_path)
                     zipf.write(file_path, arcname=arcname)
 
-    # Return the path of the zip file
-    return zip_file_path
+    # Return the relative path of the zip file
+    return os.path.relpath(zip_file_path, os.getcwd())
 
 
 # * Extracts the links to the grades pages of the user's courses from the home page of the Blackboard website.
