@@ -189,4 +189,7 @@ def list_files_in_drive_folder(drive, folder_id, team_drive_id):
     else:
         file_list = drive.ListFile({'q': query}).GetList()
 
-    return [(file['title'], file['mimeType'], file['id']) for file in file_list]
+    # Sort the files by title in alphabetical order
+    sorted_file_list = sorted(file_list, key=lambda file: file['title'])
+
+    return [(file['title'], file['mimeType'], file['id']) for file in sorted_file_list]
