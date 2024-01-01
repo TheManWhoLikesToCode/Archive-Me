@@ -56,34 +56,55 @@ drive = GoogleDrive(gauth)
 team_drive_id = '0AFReXfsUal4rUk9PVA'
 docs_folder = 'docs'
 
-
 class ScraperService:
     def __init__(self):
-        self.drivers = {}  # Dictionary to hold drivers for each user
+        self.drivers = {}
+        logging.info("ScraperService initialized")
 
     def initialize_driver(self, username):
+        logging.info(f"Initializing driver for {username}")
         if username not in self.drivers:
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            self.drivers[username] = driver
+            try:
+                service = Service(ChromeDriverManager().install())
+                driver = webdriver.Chrome(service=service, options=chrome_options)
+                self.drivers[username] = driver
+            except Exception as e:
+                logging.error(f"Error initializing WebDriver for {username}: {e}")
+                raise
         return self.drivers[username]
 
     def login(self, username, password):
-        driver = self.initialize_driver(username)
-        return log_into_blackboard(driver, username, password)
+        logging.info(f"Logging in {username}")
+        try:
+            driver = self.initialize_driver(username)
+            return log_into_blackboard(driver, username, password)
+        except Exception as e:
+            logging.error(f"Error during login for {username}: {e}")
+            self.reset(username)
+            raise
 
     def scrape(self, username):
+        logging.info(f"Scraping data for {username}")
         driver = self.drivers.get(username)
-        if driver:
-            return download_and_zip_content(driver, username)
-        else:
+        if not driver:
             raise Exception("User not logged in or session expired")
 
+        try:
+            return download_and_zip_content(driver, username)
+        except Exception as e:
+            logging.error(f"Error during scraping for {username}: {e}")
+            raise
+        finally:
+            self.reset(username)
+
     def reset(self, username):
+        logging.info(f"Resetting driver for {username}")
         driver = self.drivers.pop(username, None)
         if driver:
-            driver.quit()
-
+            try:
+                driver.quit()
+            except Exception as e:
+                logging.error(f"Error closing WebDriver for {username}: {e}")
 
 scraper_service = ScraperService()
 

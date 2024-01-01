@@ -160,7 +160,6 @@ def upload_folder(drive, local_folder_path, team_drive_id):
 
 
 def update_drive_directory(drive, local_docs_path, team_drive_id):
-
     for local_folder_name in os.listdir(local_docs_path):
         local_folder_path = os.path.join(local_docs_path, local_folder_name)
 
@@ -169,15 +168,20 @@ def update_drive_directory(drive, local_docs_path, team_drive_id):
                 drive, local_folder_name, team_drive_id)
 
             if drive_folder_id:
-                drive_files = list_files_in_drive_folder(
-                    drive, drive_folder_id, team_drive_id)
+                # Modified to get only the names of the files in the Drive folder
+                drive_files = [file_info[0] for file_info in list_files_in_drive_folder(
+                    drive, drive_folder_id, team_drive_id)]
+
                 for local_file in os.listdir(local_folder_path):
                     if local_file not in drive_files:
                         local_file_path = os.path.join(
                             local_folder_path, local_file)
+                        print(
+                            f"Uploading file: {local_file_path} to folder: {local_folder_name}")
                         upload_file_to_folder(
                             drive, drive_folder_id, local_file_path, team_drive_id)
             else:
+                print(f"Uploading folder: {local_folder_path}")
                 upload_folder(drive, local_folder_path, team_drive_id)
 
 
