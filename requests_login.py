@@ -1,31 +1,28 @@
+from concurrent.futures import ThreadPoolExecutor
 import mimetypes
 import os
 import logging
 import re
 from bs4 import BeautifulSoup
 from requests import Session
-import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from playwright.sync_api import sync_playwright
-
 
 class BlackboardSession:
-    def __init__(self, username=None, password=None):
+    def __init__(self, username=None, password=None, max_threads=100):
         self.username = username or os.environ.get('USERNAME', 'Free8864')
-        self.password = password or os.environ.get(
-            'PASSWORD', '#CFi^F6TTwot2j')
+        self.password = password or os.environ.get('PASSWORD', '#CFi^F6TTwot2j')
+        self.max_threads = max_threads 
         self.session = self._create_session()
 
     def _create_session(self):
-        retries = Retry(total=5, backoff_factor=1,
-                        status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retries)
+        retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retries, pool_maxsize=self.max_threads * 5)
         session = Session()
         session.mount('https://', adapter)
         session.mount('http://', adapter)
         return session
-
+    
     def _get_initial_url_response(self, url):
         return self.session.get(url, allow_redirects=False)
 
@@ -156,9 +153,6 @@ class BlackboardSession:
             get_courses_response = self._send_post_request(url, data=form_data)
             if get_courses_response.status_code != 200:
                 raise Exception("POST request failed.")
-            self._save_response_to_file(
-                get_courses_response, filename='courses.html')
-            logging.info("Courses retrieved and saved.")
 
             # Parse the response using Beautiful Soup with lxml parser
             soup = BeautifulSoup(get_courses_response.content, 'lxml')
@@ -216,7 +210,7 @@ class BlackboardSession:
 
         download_tasks = getattr(self, 'download_tasks', [])
 
-        for task in download_tasks:
+        def download_task(task):
             course_name, assignment_name, url = task
 
             base_directory = os.path.join(session_files_path, course_name)
@@ -248,12 +242,15 @@ class BlackboardSession:
                 f.write(response.content)
             print(f"File saved to {file_path}")
 
-    def process_courses_for_downloads(self):
+        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+            executor.map(download_task, download_tasks)
+
+    def get_download_tasks(self):
         download_tasks = []
 
         hrefs = self.courses
 
-        for course, href in hrefs.items():
+        def process_course(course, href):
             course_name = re.sub(r'[\\/:*?"<>|]', '', course.strip("\n"))
             full_url = "https://kettering.blackboard.com" + href
             response = self._get_request(full_url)
@@ -285,13 +282,15 @@ class BlackboardSession:
                 except Exception as e:
                     continue
 
-        self.download_tasks = download_tasks
+        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+            executor.map(process_course, hrefs.keys(), hrefs.values())
 
+        self.download_tasks = download_tasks
 
 # Usage:
 bb_session = BlackboardSession()
 bb_session.login()
 # bb_session.enable_instructors()
 bb_session.get_courses()
-bb_session.process_courses_for_downloads()
+bb_session.get_download_tasks()
 bb_session.download_and_save_file()
