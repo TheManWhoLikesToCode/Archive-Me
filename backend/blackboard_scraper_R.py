@@ -8,21 +8,25 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+
 class BlackboardSession:
     def __init__(self, username=None, password=None, max_threads=100):
         self.username = username or os.environ.get('USERNAME', 'Free8864')
-        self.password = password or os.environ.get('PASSWORD', '#CFi^F6TTwot2j')
-        self.max_threads = max_threads 
+        self.password = password or os.environ.get(
+            'PASSWORD', '#CFi^F6TTwot2j')
+        self.max_threads = max_threads
         self.session = self._create_session()
 
     def _create_session(self):
-        retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
-        adapter = HTTPAdapter(max_retries=retries, pool_maxsize=self.max_threads * 5)
+        retries = Retry(total=5, backoff_factor=1,
+                        status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retries,
+                              pool_maxsize=self.max_threads * 5)
         session = Session()
         session.mount('https://', adapter)
         session.mount('http://', adapter)
         return session
-    
+
     def _get_initial_url_response(self, url):
         return self.session.get(url, allow_redirects=False)
 
@@ -42,6 +46,17 @@ class BlackboardSession:
         with open(filename, 'w', encoding='utf-8') as file:
             file.write(response.text)
         logging.info(f"Response saved to '{filename}'.")
+
+    def shutdown(self):
+        """
+        Clean up resources and delete the session.
+        """
+        if self.session:
+            self.session.close()
+            del self.session
+            logging.info("Session closed and deleted.")
+        else:
+            logging.warning("No active session to delete.")
 
     def login(self):
         try:
@@ -83,11 +98,16 @@ class BlackboardSession:
             if get_response.status_code != 200:
                 raise Exception("GET request failed.")
 
+            # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
+            soup = BeautifulSoup(get_response.content, 'lxml')
+            nonce_value = soup.select_one(
+                '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
+
             url = "https://kettering.blackboard.com/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1&forwardUrl=proc_edit/_4_1/bbcourseorg&recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1"
             payload = {
                 'tab_tab_group_id': '_1_1',
                 'forwardUrl': 'proc_edit/_4_1/bbcourseorg',
-                'blackboard.platform.security.NonceUtil.nonce': '',
+                'blackboard.platform.security.NonceUtil.nonce': nonce_value,
                 'recallUrl': '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1',
                 'cmd': 'processEdit',
                 'serviceLevel': '',
@@ -124,11 +144,7 @@ class BlackboardSession:
                 'bottom_Submit': 'Submit'
             }
             enable_instructors_response = self._send_post_request(
-                get_response.url, data=payload, allow_redirects=False)
-
-            # Save response to file
-            self._save_response_to_file(
-                enable_instructors_response, filename='enable_instructors.html')
+                url, data=payload, allow_redirects=False)
 
             if enable_instructors_response.status_code == 302:  # Successful redirection
                 redirected_url = enable_instructors_response.headers['Location']
@@ -287,10 +303,12 @@ class BlackboardSession:
 
         self.download_tasks = download_tasks
 
+
 # Usage:
 bb_session = BlackboardSession()
 bb_session.login()
-# bb_session.enable_instructors()
+bb_session.enable_instructors()
 bb_session.get_courses()
 bb_session.get_download_tasks()
 bb_session.download_and_save_file()
+bb_session.shutdown()

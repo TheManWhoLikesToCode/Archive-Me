@@ -11,7 +11,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
-from blackboard_scraper import log_into_blackboard, download_and_zip_content
+from blackboard_scraper_S import log_into_blackboard, download_and_zip_content
 
 
 def is_file_valid(file_path):
