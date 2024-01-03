@@ -71,10 +71,6 @@ class BlackboardSession:
             login_send_response = self._send_post_request(
                 int_login_page_response.url, data=final_payload)
 
-            # Save response to file
-            self._save_response_to_file(
-                login_send_response, filename='login.html')
-
             if login_send_response.status_code != 200:
                 raise Exception("Final POST request failed.")
             logging.info("Login successful.")
@@ -86,9 +82,6 @@ class BlackboardSession:
         try:
             get_url = "https://kettering.blackboard.com/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1&forwardUrl=edit_module%2F_4_1%2Fbbcourseorg%3Fcmd%3Dedit&recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1"
             get_response = self._get_request(get_url)
-
-            # Save response to file
-            self._save_response_to_file(get_response, filename='get.html')
 
             if get_response.status_code != 200:
                 raise Exception("GET request failed.")
@@ -213,20 +206,23 @@ class BlackboardSession:
         except Exception as e:
             logging.error(f"An error occurred while getting courses: {e}")
 
-    def download_and_save_file(self, course_name, assignment_name, url):
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            if os.path.basename(current_dir) != 'backend':
-                session_files_path = os.path.join(current_dir, 'backend', 'Session Files')
-                docs_path = os.path.join(current_dir, 'backend', 'docs')
-            else:
-                session_files_path = os.path.join(current_dir, 'Session Files')
-                docs_path = os.path.join(current_dir, 'docs')
+    def download_and_save_file(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        if os.path.basename(current_dir) != 'backend':
+            session_files_path = os.path.join(
+                current_dir, 'backend', 'Session Files')
+        else:
+            session_files_path = os.path.join(current_dir, 'Session Files')
+
+        download_tasks = getattr(self, 'download_tasks', [])
+
+        for task in download_tasks:
+            course_name, assignment_name, url = task
 
             base_directory = os.path.join(session_files_path, course_name)
             os.makedirs(base_directory, exist_ok=True)
 
-            with requests.Session() as s:
-                response = s.get(url)
+            response = self._get_request(url)
 
             content_type = response.headers.get('Content-Type')
             guessed_extension = mimetypes.guess_extension(content_type)
@@ -234,7 +230,8 @@ class BlackboardSession:
             name, current_extension = os.path.splitext(assignment_name)
 
             if current_extension:
-                mime_of_current_extension = mimetypes.guess_type(assignment_name)[0]
+                mime_of_current_extension = mimetypes.guess_type(assignment_name)[
+                    0]
                 if mime_of_current_extension == content_type:
                     extension = current_extension
                 else:
@@ -264,32 +261,37 @@ class BlackboardSession:
 
             # Look in the sidebar for each selectable link
             course_menu = soup.find(id="courseMenuPalette_contents")
-            
-            for li in course_menu.find_all("li"):
-                href = li.find("a")["href"]
-                if href[0] != "/":
+
+            for li in course_menu.contents:
+                try:
+                    href = li.find("a")["href"]
+                    if href[0] != "/":
+                        continue
+                    full_url = "https://kettering.blackboard.com" + href
+                    response = self._get_request(full_url)
+                    soup = BeautifulSoup(response.content, "html.parser")
+                    content_listContainer = soup.find(id="containerdiv")
+
+                    if content_listContainer:
+                        for content_li in content_listContainer.find_all('li'):
+                            assignment_name = re.sub(
+                                r'[\\/:*?"<>|]', '_', content_li.text.strip().split("\n")[0] or "Untitled")
+                            a = content_li.select_one('.details a')
+                            if a and a['href'][0] != "h":
+                                full_url = "https://kettering.blackboard.com" + \
+                                    a['href']
+                                download_tasks.append(
+                                    (course_name, assignment_name, full_url))
+                except Exception as e:
                     continue
-                full_url = "https://kettering.blackboard.com" + href
-                response = self._get_request(full_url)
-                self._save_response_to_file(
-                    response, filename='meni_item_course_menu.html')
-                content_listContainer = soup.find(id="content_listContainer")
-                if content_listContainer:
-                    for li in content_listContainer.find_all('li'):
-                        assignment_name = re.sub(
-                            r'[\\/:*?"<>|]', '_', li.text.strip().split("\n")[0] or "Untitled")
-                        a = li.select_one('a')
-                        if a and a['href'][0] != "h":
-                            full_url = "https://kettering.blackboard.com" + \
-                                a['href']
-                            self.download_and_save_file(self,
-                                course_name, assignment_name, full_url)
-            
+
+        self.download_tasks = download_tasks
+
+
 # Usage:
 bb_session = BlackboardSession()
 bb_session.login()
 # bb_session.enable_instructors()
 bb_session.get_courses()
 bb_session.process_courses_for_downloads()
-print(bb_session.courses)
-print(bb_session.downloadTasks)
+bb_session.download_and_save_file()
