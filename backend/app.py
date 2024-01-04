@@ -1,9 +1,11 @@
 import logging
 import os
 import threading
+import time
 import uuid
 from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
+from flask_apscheduler import APScheduler
 from blackboard_scraper_R import BlackboardSession
 from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
 import config
@@ -12,7 +14,7 @@ from pydrive2.drive import GoogleDrive
 
 app = Flask(__name__)
 cors = CORS(app)
-app.secret_key = os.urandom(24)
+scheduler = APScheduler()
 
 # Configuration
 app.config.from_pyfile(config.__file__)
@@ -68,6 +70,45 @@ def retrieve_bb_session(username):
         bb_sessions['bb_sessions'] = {}
 
     session_id = bb_sessions['bb_sessions'].get(username)
+    if session_id:
+        return bb_sessions.get(session_id)
+
+    return None 
+
+def delete_bb_session(username):
+    session_id = bb_sessions['bb_sessions'].get(username)
+    if session_id:
+        session_to_delete = bb_sessions.pop(session_id, None)
+        if session_to_delete:
+            del bb_sessions['bb_sessions'][username]
+
+@scheduler.task('interval', id='delete_sessions', seconds=60)
+def delete_inactive_bb_sessions(inactivity_threshold_seconds=500):
+    current_time = time.time()
+
+    # Check if 'bb_sessions' key exists
+    if 'bb_sessions' not in bb_sessions:
+        return  # No sessions exist yet
+
+    # Collect usernames with inactive sessions for deletion
+    usernames_to_delete = []
+    for username, session_id in bb_sessions['bb_sessions'].items():
+        session = bb_sessions.get(session_id)
+        if session:
+            last_activity_time = session.last_activity_time
+            inactive_duration = current_time - last_activity_time
+            if inactive_duration > inactivity_threshold_seconds:
+                usernames_to_delete.append(username)
+
+    # Delete collected usernames' sessions
+    for username in usernames_to_delete:
+        delete_bb_session(username)
+    
+    print("Deleting inactive sessions at:", time.time())
+
+
+
+    session_id = bb_sessions['bb_sessions'].get(username)
     return bb_sessions.get(session_id)
 
 @app.route('/login', methods=['POST'])
@@ -107,6 +148,9 @@ def scrape():
 
     try:
         bb_session = retrieve_bb_session(username)
+
+        if not bb_session:
+            return jsonify({'error': 'Session not found'}), 400
 
         file_key = bb_session.scrape() 
         if not bb_session.response:
@@ -172,5 +216,9 @@ if __name__ == '__main__':
 
     team_drive_id = '0AFReXfsUal4rUk9PVA'
     docs_folder = 'docs'
+
+    # Delete inactive sessions
+    scheduler.init_app(app)
+    scheduler.start()
 
     app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])

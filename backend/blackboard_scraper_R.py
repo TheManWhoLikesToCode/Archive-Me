@@ -1,13 +1,14 @@
-from concurrent.futures import ThreadPoolExecutor
-import mimetypes
-import os
 import logging
+import mimetypes
+import time
+import os
 import re
+import zipfile
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-import zipfile
 
 
 class BlackboardSession:
@@ -35,6 +36,7 @@ class BlackboardSession:
         self.courseFound = False
         self.downloadTasksFound = False
         self.zipFound = False
+        self.last_activity_time = None
         self.response = None
         self.session = self._create_session()
 
@@ -145,6 +147,8 @@ class BlackboardSession:
                     login_payload_response = "Login failed."
                 self.set_response(login_payload_response)
 
+            self.last_activity_time = time.time()
+
         except Exception as e:
             logging.error(f"An error occurred during login: {e}")
 
@@ -174,6 +178,7 @@ class BlackboardSession:
             return
 
         self.response = None
+        self.last_activity_time = time.time()
         return file_key
 
     def enable_instructors(self):
@@ -246,6 +251,8 @@ class BlackboardSession:
                 self.instructorsFound = False
                 logging.error(
                     f"POST request failed with status code: {enable_instructors_response.status_code}")
+            
+            self.last_activity_time = time.time()
 
         except Exception as e:
             logging.error(f"An error occurred enabling instructors: {e}")
@@ -326,6 +333,7 @@ class BlackboardSession:
                         continue
 
             self.courses = hrefs
+            self.last_activity_time = time.time()
 
         except Exception as e:
             self.courseFound = False
@@ -402,6 +410,8 @@ class BlackboardSession:
 
         # Return the relative path of the zip file
         self.zipFound = True
+        self.last_activity_time = time.time()
+
         return os.path.relpath(zip_file_path, os.getcwd())
 
     def get_download_tasks(self):
@@ -459,6 +469,7 @@ class BlackboardSession:
 
         self.download_tasks = download_tasks
         self.downloadTasksFound = True
+        self.last_activity_time = time.time()
 
 
 
