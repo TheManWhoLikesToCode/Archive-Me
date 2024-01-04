@@ -6,7 +6,7 @@ import uuid
 from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
-from backend.blackboard_scraper import BlackboardSession
+from blackboard_scraper import BlackboardSession
 from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
 import config
 from pydrive2.auth import GoogleAuth
@@ -34,14 +34,16 @@ def remove_file_safely(file_path):
     except OSError as error:
         app.logger.error(f"Error removing file: {error}")
 
-
-def execute_post_download_operations(file_path):
-    remove_file_safely(file_path)
+@scheduler.task('interval', id='clean_up', seconds=600)
+def clean_up_and_upload_files_to_google_drive(file_path=None):
+    
+    if file_path:
+        remove_file_safely(file_path)
 
     try:
         clean_up_session_files(True)
         delete_session_files()
-        update_drive_directory(drive, docs_folder, team_drive_id)
+        update_drive_directory(drive, team_drive_id)
         clean_up_docs_files()
     except Exception as e:
         app.logger.error(f"Error during post-download operations: {e}")
@@ -89,7 +91,7 @@ def delete_bb_session(username):
 
 
 @scheduler.task('interval', id='delete_sessions', seconds=60)
-def delete_inactive_bb_sessions(inactivity_threshold_seconds=500):
+def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
     current_time = time.time()
 
     # Check if 'bb_sessions' key exists
@@ -182,7 +184,7 @@ def download(file_key):
     @after_this_request
     def trigger_post_download_operations(response):
         thread = threading.Thread(
-            target=execute_post_download_operations, args=(file_path,))
+            target=clean_up_and_upload_files_to_google_drive, args=(file_path,))
         thread.start()
         return response
 
@@ -212,12 +214,11 @@ def list_root_directory():
 
 
 if __name__ == '__main__':
-    # gauth = GoogleAuth()
-    # gauth.LocalWebserverAuth()
-    # drive = GoogleDrive(gauth)
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()
+    drive = GoogleDrive(gauth)
 
     team_drive_id = '0AFReXfsUal4rUk9PVA'
-    docs_folder = 'docs'
 
     # Delete inactive sessions
     scheduler.init_app(app)

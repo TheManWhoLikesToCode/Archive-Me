@@ -138,7 +138,7 @@ const app = (() => {
       const data = await response.json();
       const message = data.message || 'Error occurred';
       responseContainer.textContent = message;
-  
+
       // Store username in session storage if login is successful
       if (response.ok) {
         sessionStorage.setItem("user", JSON.stringify({ username: username }));
@@ -160,22 +160,22 @@ const app = (() => {
       console.log("Archiving courses...");
       // Retrieve user data from session storage
       const user = JSON.parse(sessionStorage.getItem("user"));
-  
+
       if (!user || !user.username) {
         console.error("User information not available for archiving courses");
         alert("User information is required.");
         return; // Exit the function if user information is not available
       }
-  
+
       console.log("User:", user.username);
-  
+
       const url = `http://127.0.0.1:5001/scrape?username=${encodeURIComponent(user.username)}`;
-  
+
       const response = await fetchWithErrorHandler(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
-  
+
       const data = await response.json();
       if (data.file_key) {
         fileKeyGlobal = data.file_key;
@@ -222,37 +222,36 @@ const app = (() => {
     }
   };
 
-// Global variable to store the current directory name
-let currentDirectoryName = '/';
+  // Global variable to store the current directory name
+  let currentDirectoryName = '/';
 
-const updateDirectoryList = async (path, directoryName = '/') => {
-  try {
-    const data = await (await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`)).json();
-    $('#directoryList').empty();
+  const updateDirectoryList = async (path, directoryName = '/') => {
+    try {
+      const data = await (await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`)).json();
+      $('#directoryList').empty();
 
-    // Update the global directory name
-    currentDirectoryName = directoryName;
-    $('#path').text(currentDirectoryName);
+      // Update the global directory name
+      currentDirectoryName = directoryName;
+      $('#path').text(currentDirectoryName);
 
-    data.forEach(item => {
-      const li = $('<li>');
-      const link = $('<a>')
-        .attr('href', `#`)
-        .text(item[0]) // Display the course name
-        .click(async (event) => {
-          event.preventDefault();
-          // Pass both the ID and the name of the directory
-          await updateDirectoryList(item[2], item[0]);
-        });
-      li.append(link);
-      $('#directoryList').append(li);
-    });
-  } catch (error) {
-    console.error("Error updating directory list:", error);
-    alert('Error updating directory list: ' + error.message);
-  }
-};
-
+      data.forEach(item => {
+        const li = $('<li>');
+        const link = $('<a>')
+          .attr('href', `#`)
+          .text(item[0]) // Display the course name
+          .click(async (event) => {
+            event.preventDefault();
+            // Pass both the ID and the name of the directory
+            await updateDirectoryList(item[2], item[0]);
+          });
+        li.append(link);
+        $('#directoryList').append(li);
+      });
+    } catch (error) {
+      console.error("Error updating directory list:", error);
+      alert('Error updating directory list: ' + error.message);
+    }
+  };
 
   const onDirectoryChange = (newPath) => {
     currentPath = newPath;
@@ -266,7 +265,6 @@ const updateDirectoryList = async (path, directoryName = '/') => {
     pathSegments.pop();
     onDirectoryChange(pathSegments.join('/'));
   });
-
 
   const init = () => {
     const loginForm = document.querySelector("#loginForm");

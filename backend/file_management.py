@@ -27,7 +27,10 @@ def clean_up_session_files(compress_files):
     else:
         session_files_path = os.path.join(current_dir, 'Session Files')
         docs_path = os.path.join(current_dir, 'docs')
-
+    
+    if not os.path.exists(session_files_path):
+        return
+    
     if compress_files:
         # Compress PDFs within the session files path
         compress_pdfs(session_files_path)
@@ -72,6 +75,10 @@ def delete_session_files():
     else:
         session_files_path = os.path.join(current_dir, 'Session Files')
 
+    # Check if the session_files_path exists
+    if not os.path.exists(session_files_path):
+        return
+
     shutil.rmtree(session_files_path)
     print("Session files deleted successfully.")
 
@@ -85,7 +92,10 @@ def clean_up_docs_files():
         docs_file_path = os.path.join(current_dir, 'backend', 'docs')
     else:
         docs_file_path = os.path.join(current_dir, 'docs')
-
+    
+    # Check if the docs_file_path exists
+    if not os.path.exists(docs_file_path):
+        return
     shutil.rmtree(docs_file_path)
     print("Docs files deleted successfully.")
 
@@ -159,9 +169,21 @@ def upload_folder(drive, local_folder_path, team_drive_id):
                                   filepath, team_drive_id)
 
 
-def update_drive_directory(drive, local_docs_path, team_drive_id):
-    for local_folder_name in os.listdir(local_docs_path):
-        local_folder_path = os.path.join(local_docs_path, local_folder_name)
+def update_drive_directory(drive, team_drive_id):
+
+    current_dir = os.getcwd()
+   
+   # Check if the current directory ends with 'backend'. If not, append 'backend' to the path
+    if os.path.basename(current_dir) != 'backend':
+        docs_file_path = os.path.join(current_dir, 'backend', 'docs')
+    else:
+        docs_file_path = os.path.join(current_dir, 'docs')
+
+    if not os.path.exists(docs_file_path):
+        return
+
+    for local_folder_name in os.listdir(docs_file_path):
+        local_folder_path = os.path.join(docs_file_path, local_folder_name)
 
         if os.path.isdir(local_folder_path):
             drive_folder_id = find_folder_id(
