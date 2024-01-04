@@ -209,13 +209,21 @@ def update_drive_directory(drive, team_drive_id):
 
 def list_files_in_drive_folder(drive, folder_id, team_drive_id):
     query = f"'{folder_id}' in parents and trashed=false"
+    
+    # Attempt to use the provided ID as a folder ID
     if team_drive_id:
         file_list = drive.ListFile({'q': query, 'supportsTeamDrives': True, 'includeTeamDriveItems': True,
                                    'corpora': 'teamDrive', 'teamDriveId': team_drive_id}).GetList()
     else:
         file_list = drive.ListFile({'q': query}).GetList()
-
+    
+    # Check if the file_list is empty, if so, try treating the ID as a file ID
+    if not file_list:
+        file = drive.CreateFile({'id': folder_id})
+        file.FetchMetadata()
+        return [(file['title'], file['mimeType'], file['id'], 'FILE')]
+    
     # Sort the files by title in alphabetical order
     sorted_file_list = sorted(file_list, key=lambda file: file['title'])
-
+    
     return [(file['title'], file['mimeType'], file['id']) for file in sorted_file_list]

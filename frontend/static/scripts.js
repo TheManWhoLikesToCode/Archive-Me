@@ -227,26 +227,34 @@ const app = (() => {
 
   const updateDirectoryList = async (path, directoryName = '/') => {
     try {
-      const data = await (await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`)).json();
-      $('#directoryList').empty();
+      const response = await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`);
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        $('#directoryList').empty();
 
-      // Update the global directory name
-      currentDirectoryName = directoryName;
-      $('#path').text(currentDirectoryName);
-
-      data.forEach(item => {
-        const li = $('<li>');
-        const link = $('<a>')
-          .attr('href', `#`)
-          .text(item[0]) // Display the course name
-          .click(async (event) => {
-            event.preventDefault();
-            // Pass both the ID and the name of the directory
-            await updateDirectoryList(item[2], item[0]);
-          });
-        li.append(link);
-        $('#directoryList').append(li);
-      });
+        // Update the global directory name
+        currentDirectoryName = directoryName;
+        $('#path').text(currentDirectoryName);
+        console.log(data);
+        data.forEach(item => {
+          const li = $('<li>');
+          const link = $('<a>')
+            .attr('href', `#`)
+            .text(item[0]) // Display the course name
+            .click(async (event) => {
+              event.preventDefault();
+              // Pass both the ID and the name of the directory
+              await updateDirectoryList(item[2], item[0]);
+            });
+          li.append(link);
+          $('#directoryList').append(li);
+        });
+      } else {
+        const file = await response.blob();
+        const url = URL.createObjectURL(file);
+        window.location.href = url;
+      }
     } catch (error) {
       console.error("Error updating directory list:", error);
       alert('Error updating directory list: ' + error.message);
