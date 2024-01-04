@@ -1,7 +1,8 @@
 import logging
 import os
 import threading
-from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory, session
+import uuid
+from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from blackboard_scraper_R import BlackboardSession
 from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
@@ -44,17 +45,30 @@ def execute_post_download_operations(file_path):
         app.logger.error(f"Error during post-download operations: {e}")
 
 
+bb_sessions = {}
+
 def get_bb_session(username):
-    if 'bb_sessions' not in session:
-        session['bb_sessions'] = {}
+    if 'bb_sessions' not in bb_sessions:
+        bb_sessions['bb_sessions'] = {}
 
-    if username not in session['bb_sessions']:
-        session['bb_sessions'][username] = BlackboardSession()
+    if username not in bb_sessions['bb_sessions']:
+        session_id = str(uuid.uuid4())  # Generate a unique session ID
+        bb_sessions['bb_sessions'][username] = session_id
+        bb_sessions[session_id] = BlackboardSession()  # Store the session object
 
-    return session['bb_sessions'][username]
+    return bb_sessions[bb_sessions['bb_sessions'][username]]
 
 def put_bb_session(username, bb_session):
-    session['bb_sessions'][username] = bb_session
+    session_id = bb_sessions['bb_sessions'].get(username)
+    if session_id:
+        bb_sessions[session_id] = bb_session
+
+def retrieve_bb_session(username):
+    if 'bb_sessions' not in bb_sessions:
+        bb_sessions['bb_sessions'] = {}
+
+    session_id = bb_sessions['bb_sessions'].get(username)
+    return bb_sessions.get(session_id)
 
 @app.route('/login', methods=['POST'])
 @cross_origin()
@@ -73,10 +87,9 @@ def login():
         bb_session.password = password
 
         bb_session.login()
-        response = bb_session.get_response()
+        response = bb_session.get_response()    
         if response == 'Login successful.':
             put_bb_session(username, bb_session)
-            response.headers.add('Access-Control-Allow-Origin', '*')  # Add this line
             return jsonify({'message': 'Logged in successfully'})
         else:
             return jsonify({'error': response}), 401
@@ -93,7 +106,7 @@ def scrape():
         return jsonify({'error': 'Username is required'}), 400
 
     try:
-        bb_session = get_bb_session(username)
+        bb_session = retrieve_bb_session(username)
 
         file_key = bb_session.scrape() 
         if not bb_session.response:
@@ -153,9 +166,9 @@ def list_root_directory():
 
 
 if __name__ == '__main__':
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()
-    drive = GoogleDrive(gauth)
+    # gauth = GoogleAuth()
+    # gauth.LocalWebserverAuth()
+    # drive = GoogleDrive(gauth)
 
     team_drive_id = '0AFReXfsUal4rUk9PVA'
     docs_folder = 'docs'
