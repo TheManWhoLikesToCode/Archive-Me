@@ -3,3 +3,4 @@ backend/client_secrets.json
 client_secrets.json
 *.pyc
 *.pyc
+mycreds.txt

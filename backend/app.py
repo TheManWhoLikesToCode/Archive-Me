@@ -48,6 +48,17 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
     except Exception as e:
         app.logger.error(f"Error during post-download operations: {e}")
 
+def authorize_drive():
+    gauth = GoogleAuth()
+    gauth.LoadCredentialsFile("mycreds.txt")
+    if gauth.credentials is None:
+        gauth.LocalWebserverAuth()
+    elif gauth.access_token_expired:
+        gauth.Refresh()
+    else:
+        gauth.Authorize()
+    gauth.SaveCredentialsFile("mycreds.txt")
+    return GoogleDrive(gauth)
 
 bb_sessions = {}
 
@@ -246,9 +257,8 @@ def list_root_directory():
 
 
 if __name__ == '__main__':
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()
-    drive = GoogleDrive(gauth)
+    
+    drive = authorize_drive()
 
     team_drive_id = '0AFReXfsUal4rUk9PVA'
 
