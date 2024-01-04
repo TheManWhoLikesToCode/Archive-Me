@@ -6,7 +6,7 @@ import uuid
 from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
-from blackboard_scraper_R import BlackboardSession
+from backend.blackboard_scraper import BlackboardSession
 from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
 import config
 from pydrive2.auth import GoogleAuth
@@ -49,6 +49,7 @@ def execute_post_download_operations(file_path):
 
 bb_sessions = {}
 
+
 def get_bb_session(username):
     if 'bb_sessions' not in bb_sessions:
         bb_sessions['bb_sessions'] = {}
@@ -56,14 +57,17 @@ def get_bb_session(username):
     if username not in bb_sessions['bb_sessions']:
         session_id = str(uuid.uuid4())  # Generate a unique session ID
         bb_sessions['bb_sessions'][username] = session_id
-        bb_sessions[session_id] = BlackboardSession()  # Store the session object
+        # Store the session object
+        bb_sessions[session_id] = BlackboardSession()
 
     return bb_sessions[bb_sessions['bb_sessions'][username]]
+
 
 def put_bb_session(username, bb_session):
     session_id = bb_sessions['bb_sessions'].get(username)
     if session_id:
         bb_sessions[session_id] = bb_session
+
 
 def retrieve_bb_session(username):
     if 'bb_sessions' not in bb_sessions:
@@ -73,7 +77,8 @@ def retrieve_bb_session(username):
     if session_id:
         return bb_sessions.get(session_id)
 
-    return None 
+    return None
+
 
 def delete_bb_session(username):
     session_id = bb_sessions['bb_sessions'].get(username)
@@ -81,6 +86,7 @@ def delete_bb_session(username):
         session_to_delete = bb_sessions.pop(session_id, None)
         if session_to_delete:
             del bb_sessions['bb_sessions'][username]
+
 
 @scheduler.task('interval', id='delete_sessions', seconds=60)
 def delete_inactive_bb_sessions(inactivity_threshold_seconds=500):
@@ -103,13 +109,12 @@ def delete_inactive_bb_sessions(inactivity_threshold_seconds=500):
     # Delete collected usernames' sessions
     for username in usernames_to_delete:
         delete_bb_session(username)
-    
+
     print("Deleting inactive sessions at:", time.time())
-
-
 
     session_id = bb_sessions['bb_sessions'].get(username)
     return bb_sessions.get(session_id)
+
 
 @app.route('/login', methods=['POST'])
 @cross_origin()
@@ -128,7 +133,7 @@ def login():
         bb_session.password = password
 
         bb_session.login()
-        response = bb_session.get_response()    
+        response = bb_session.get_response()
         if response == 'Login successful.':
             put_bb_session(username, bb_session)
             return jsonify({'message': 'Logged in successfully'})
@@ -138,9 +143,7 @@ def login():
         return jsonify({'error': str(e)}), 500
 
 
-
 @app.route('/scrape', methods=['GET'])
-
 def scrape():
     username = request.args.get('username')
     if not username:
@@ -152,7 +155,7 @@ def scrape():
         if not bb_session:
             return jsonify({'error': 'Session not found'}), 400
 
-        file_key = bb_session.scrape() 
+        file_key = bb_session.scrape()
         if not bb_session.response:
             file_path = os.path.join(os.getcwd(), file_key)
             if not file_key or not os.path.isfile(file_path):
@@ -164,7 +167,6 @@ def scrape():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 
 @app.route('/download/<file_key>', methods=['GET'])

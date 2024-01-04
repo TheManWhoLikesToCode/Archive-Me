@@ -1,7 +1,7 @@
 import logging
 import random
 import unittest
-from blackboard_scraper_R import BlackboardSession
+from backend.blackboard_scraper import BlackboardSession
 from unittest.mock import MagicMock, patch
 from usernames import usernames
 
