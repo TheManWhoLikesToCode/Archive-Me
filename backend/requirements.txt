@@ -4,3 +4,7 @@ flask
 ray
 argparse
 bs4
+gunicorn
+flask_cors
+flask_apscheduler
+pydrive2
