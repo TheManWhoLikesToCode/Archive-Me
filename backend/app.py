@@ -129,6 +129,11 @@ def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
     return bb_sessions.get(session_id)
 
 
+@app.route('/')
+@cross_origin()
+def index():
+    return jsonify({'message': "Welcome to the ArchiveMe's Blackboard Scraper API"})
+
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
@@ -265,4 +270,4 @@ if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
 
-    app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])
+    app.run(host='0.0.0.0', debug=app.config['DEBUG'])
