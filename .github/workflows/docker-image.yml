@@ -16,9 +16,10 @@ jobs:
     - name: Checkout backend code
       uses: actions/checkout@v3
       with:
-        path: 'backend'
+        context: './backend'
+        file: './backend/Dockerfile'
     - name: Build the Docker image for backend
-      run: docker build ./backend --file backend/Dockerfile --tag backend-image-name:$(date +%s) .
+      run: docker build --tag backend-image-name:$(date +%s) .
 
   frontend-build:
 
@@ -28,6 +29,7 @@ jobs:
     - name: Checkout frontend code
       uses: actions/checkout@v3
       with:
-        path: 'frontend'
+        context: './frontend'
+        file: './frontend/Dockerfile'
     - name: Build the Docker image for frontend
-      run: docker build ./frontend --file frontend/Dockerfile --tag frontend-image-name:$(date +%s) .
+      run: docker build --tag frontend-image-name:$(date +%s) .
