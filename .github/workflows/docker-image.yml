@@ -19,7 +19,7 @@ jobs:
         context: './backend'
         file: './backend/Dockerfile'
     - name: Build the Docker image for backend
-      run: docker build --file ./backend/Dockerfile --tag backend-image-name:$(date +%s) .
+      run: docker build ./backend -t backend-image-name:$(date +%s)
 
   frontend-build:
 
@@ -32,4 +32,4 @@ jobs:
         context: './frontend'
         file: './frontend/Dockerfile'
     - name: Build the Docker image for frontend
-      run: docker build --file ./backend/Dockerfile --tag frontend-image-name:$(date +%s) .
+      run: docker build ./frontend -t frontend-image-name:$(date +%s)
