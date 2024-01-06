@@ -26,4 +26,4 @@ Try Archive-Me out [here!](https://archive-me.net)
 - [@TheManWhoLikesToCode](https://github.com/TheManWhoLikesToCode)
 
 ## Description
-Archive Me is a Python-based tool specifically designed for Kettering University students to efficiently archive and manage their course materials and grades on Blackboard. By leveraging session requests for automated login and web navigation, along with Beautiful Soup for parsing web content, it extracts detailed course information and organizes it for easy access and long-term reference. Try it out here. (https://archive-me.net/)
+Archive Me is a Python-based tool specifically designed for Kettering University students to efficiently archive and manage their course materials and grades on Blackboard. By leveraging session requests for automated login and web navigation, along with Beautiful Soup for parsing web content, it extracts detailed course information and organizes it for easy access and long-term reference. Try it out [here](https://archive-me.net/).
