@@ -189,70 +189,76 @@ class BlackboardSession:
 
         try:
             get_url = "https://kettering.blackboard.com/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1&forwardUrl=edit_module%2F_4_1%2Fbbcourseorg%3Fcmd%3Dedit&recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1"
-            get_response = self._get_request(get_url)
+            try:
+                get_response = self._get_request(get_url)
 
-            if get_response.status_code != 200:
-                raise Exception("GET request failed.")
+                if get_response.status_code != 200:
+                    raise Exception("GET request failed.")
 
-            # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
-            soup = BeautifulSoup(get_response.content, "html.parser")
-            nonce_value = soup.select_one(
-                '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
+                # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
+                soup = BeautifulSoup(get_response.content, "html.parser")
+                nonce_value = soup.select_one(
+                    '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
 
-            url = "https://kettering.blackboard.com/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1&forwardUrl=proc_edit/_4_1/bbcourseorg&recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1"
-            payload = {
-                'tab_tab_group_id': '_1_1',
-                'forwardUrl': 'proc_edit/_4_1/bbcourseorg',
-                'blackboard.platform.security.NonceUtil.nonce': nonce_value,
-                'recallUrl': '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1',
-                'cmd': 'processEdit',
-                'serviceLevel': '',
-                'termDisplayOrder': '_254_1',
-                'amc.groupbyterm': 'true',
-                'selectAll_254_1': 'true',
-                'amc.showterm._254_1': 'true',
-                'termCourses__254_1': 'true',
-                'amc.showcourse._51671_1': 'true',
-                'amc.showcourseid._51671_1': 'true',
-                'amc.showinstructors._51671_1': 'true',
-                'amc.showcourse._51672_1': 'true',
-                'amc.showcourseid._51672_1': 'true',
-                'amc.showinstructors._51672_1': 'true',
-                'amc.showcourse._51629_1': 'true',
-                'amc.showcourseid._51629_1': 'true',
-                'amc.showinstructors._51629_1': 'true',
-                'amc.showcourse._51904_1': 'true',
-                'amc.showcourseid._51904_1': 'true',
-                'amc.showinstructors._51904_1': 'true',
-                'amc.showcourse._51945_1': 'true',
-                'amc.showcourseid._51945_1': 'true',
-                'amc.showinstructors._51945_1': 'true',
-                'amc.url.name.1': '',
-                'amc.url.url.1': '',
-                'amc.url.name.2': '',
-                'amc.url.url.2': '',
-                'amc.url.name.3': '',
-                'amc.url.url.3': '',
-                'amc.url.name.4': '',
-                'amc.url.url.4': '',
-                'amc.url.name.5': '',
-                'amc.url.url.5': '',
-                'bottom_Submit': 'Submit'
-            }
-            enable_instructors_response = self._send_post_request(
-                url, data=payload, allow_redirects=False)
+                url = "https://kettering.blackboard.com/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1&forwardUrl=proc_edit/_4_1/bbcourseorg&recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1"
+                payload = {
+                    'tab_tab_group_id': '_1_1',
+                    'forwardUrl': 'proc_edit/_4_1/bbcourseorg',
+                    'blackboard.platform.security.NonceUtil.nonce': nonce_value,
+                    'recallUrl': '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1',
+                    'cmd': 'processEdit',
+                    'serviceLevel': '',
+                    'termDisplayOrder': '_254_1',
+                    'amc.groupbyterm': 'true',
+                    'selectAll_254_1': 'true',
+                    'amc.showterm._254_1': 'true',
+                    'termCourses__254_1': 'true',
+                    'amc.showcourse._51671_1': 'true',
+                    'amc.showcourseid._51671_1': 'true',
+                    'amc.showinstructors._51671_1': 'true',
+                    'amc.showcourse._51672_1': 'true',
+                    'amc.showcourseid._51672_1': 'true',
+                    'amc.showinstructors._51672_1': 'true',
+                    'amc.showcourse._51629_1': 'true',
+                    'amc.showcourseid._51629_1': 'true',
+                    'amc.showinstructors._51629_1': 'true',
+                    'amc.showcourse._51904_1': 'true',
+                    'amc.showcourseid._51904_1': 'true',
+                    'amc.showinstructors._51904_1': 'true',
+                    'amc.showcourse._51945_1': 'true',
+                    'amc.showcourseid._51945_1': 'true',
+                    'amc.showinstructors._51945_1': 'true',
+                    'amc.url.name.1': '',
+                    'amc.url.url.1': '',
+                    'amc.url.name.2': '',
+                    'amc.url.url.2': '',
+                    'amc.url.name.3': '',
+                    'amc.url.url.3': '',
+                    'amc.url.name.4': '',
+                    'amc.url.url.4': '',
+                    'amc.url.name.5': '',
+                    'amc.url.url.5': '',
+                    'bottom_Submit': 'Submit'
+                }
+                enable_instructors_response = self._send_post_request(
+                    url, data=payload, allow_redirects=False)
 
-            if enable_instructors_response.status_code == 302:
-                redirected_url = enable_instructors_response.headers['Location']
-                logging.info(
-                    f"Successful POST request. Redirected to: {redirected_url}")
-                self.instructorsFound = True
-            else:
-                self.instructorsFound = False
+                if enable_instructors_response.status_code == 302:
+                    redirected_url = enable_instructors_response.headers['Location']
+                    logging.info(
+                        f"Successful POST request. Redirected to: {redirected_url}")
+                    self.instructorsFound = True
+                else:
+                    self.instructorsFound = False
+                    logging.error(
+                        f"POST request failed with status code: {enable_instructors_response.status_code}")
+
+                self.last_activity_time = time.time()
+
+            except Exception as e:
                 logging.error(
-                    f"POST request failed with status code: {enable_instructors_response.status_code}")
-            
-            self.last_activity_time = time.time()
+                    f"GET request failed with status code: {get_response.status_code}")
+                return
 
         except Exception as e:
             logging.error(f"An error occurred enabling instructors: {e}")
@@ -470,6 +476,3 @@ class BlackboardSession:
         self.download_tasks = download_tasks
         self.downloadTasksFound = True
         self.last_activity_time = time.time()
-
-
-
