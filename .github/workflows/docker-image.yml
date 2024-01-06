@@ -1,0 +1,33 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  backend-build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout backend code
+      uses: actions/checkout@v3
+      with:
+        path: 'backend'
+    - name: Build the Docker image for backend
+      run: docker build ./backend --file backend/Dockerfile --tag backend-image-name:$(date +%s)
+
+  frontend-build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout frontend code
+      uses: actions/checkout@v3
+      with:
+        path: 'frontend'
+    - name: Build the Docker image for frontend
+      run: docker build ./frontend --file frontend/Dockerfile --tag frontend-image-name:$(date +%s)
