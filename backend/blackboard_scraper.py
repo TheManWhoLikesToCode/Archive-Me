@@ -84,6 +84,12 @@ class BlackboardSession:
 
     def get_response(self):
         return self.response
+    
+    def get_InstructorsFound(self):
+        return self.instructorsFound
+    
+    def set_InstructorsFound(self, instructorsFound):
+        self.instructorsFound = instructorsFound
 
     def shutdown(self):
         """
@@ -159,7 +165,7 @@ class BlackboardSession:
             return
 
         self.enable_instructors()
-        if self.instructorsFound == False:
+        if self.get_InstructorsFound() == False:
             self.response = "No instructors found."
 
         self.get_courses()
@@ -247,9 +253,9 @@ class BlackboardSession:
                     redirected_url = enable_instructors_response.headers['Location']
                     logging.info(
                         f"Successful POST request. Redirected to: {redirected_url}")
-                    self.instructorsFound = True
+                    self.set_InstructorsFound(True)
                 else:
-                    self.instructorsFound = False
+                    self.set_InstructorsFound(False)
                     logging.error(
                         f"POST request failed with status code: {enable_instructors_response.status_code}")
 
@@ -310,7 +316,7 @@ class BlackboardSession:
             hrefs = {course.text.strip(): course.find("a")["href"].strip()
                      for course in courses_list if course.find("a") and course.find("a").get("href")}
 
-            if self.instructorFound:
+            if self.get_InstructorsFound() == True:
                 # Process instructors and format course names
                 for course in courses_list:
                     try:
@@ -343,6 +349,7 @@ class BlackboardSession:
 
         except Exception as e:
             self.courseFound = False
+            self.response = e
             logging.error(f"An error occurred while getting courses: {e}")
 
     def download_and_save_file(self):
