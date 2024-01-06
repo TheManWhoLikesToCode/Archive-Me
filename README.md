@@ -7,11 +7,11 @@ This platform is specifically designed for Kettering University students to extr
 
 ## Features
 
-Automated login
+- Automated login
 
-Course information extraction
+- Course information extraction
 
-Data organization
+- Data organization
 
 Intended for Kettering University students: This tool is specifically designed for use by students at Kettering University and may not be compatible with other institutions.
 
