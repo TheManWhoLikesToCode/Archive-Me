@@ -18,7 +18,7 @@ jobs:
       with:
         path: 'backend'
     - name: Build the Docker image for backend
-      run: docker build ./backend --file backend/Dockerfile --tag backend-image-name:$(date +%s)
+      run: docker build ./backend --file backend/Dockerfile --tag backend-image-name:$(date +%s) .
 
   frontend-build:
 
@@ -30,4 +30,4 @@ jobs:
       with:
         path: 'frontend'
     - name: Build the Docker image for frontend
-      run: docker build ./frontend --file frontend/Dockerfile --tag frontend-image-name:$(date +%s)
+      run: docker build ./frontend --file frontend/Dockerfile --tag frontend-image-name:$(date +%s) .
