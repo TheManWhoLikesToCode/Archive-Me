@@ -83,6 +83,7 @@ $(function () {
 const app = (() => {
   let fileKeyGlobal = null;
   let currentPath = '';
+  const apiUrl = 'http://api.archive-me.net';
 
   const showLoadingScreen = () => {
     const loadingScreen = document.getElementById("loading-screen");
@@ -125,7 +126,7 @@ const app = (() => {
     showLoadingScreen();
 
     try {
-      const response = await fetchWithErrorHandler("http://127.0.0.1:5001/login", {
+      const response = await fetchWithErrorHandler(`${apiUrl}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,7 +170,7 @@ const app = (() => {
 
       console.log("User:", user.username);
 
-      const url = `http://127.0.0.1:5001/scrape?username=${encodeURIComponent(user.username)}`;
+      const url = `${apiUrl}/scrape?username=${encodeURIComponent(user.username)}`;
 
       const response = await fetchWithErrorHandler(url, {
         method: "GET",
@@ -201,7 +202,7 @@ const app = (() => {
       console.log("Downloading file...");
       console.log(fileKeyGlobal)
       const baseUrl = window.location.origin;
-      const downloadUrl = `http://127.0.0.1:5001/download/${encodeURIComponent(fileKeyGlobal)}`;
+      const downloadUrl = `${apiUrl}/download/${encodeURIComponent(fileKeyGlobal)}`;
       const response = await fetchWithErrorHandler(downloadUrl);
 
       const blob = await response.blob();
@@ -227,7 +228,7 @@ const app = (() => {
 
   const updateDirectoryList = async (path, directoryName = '/') => {
     try {
-      const response = await fetchWithErrorHandler(`http://127.0.0.1:5001/browse/${path}`);
+      const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`);
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
@@ -265,7 +266,6 @@ const app = (() => {
     currentPath = newPath;
     updateDirectoryList(newPath);
   };
-
 
   $('#back').on('click', function (event) {
     event.preventDefault();

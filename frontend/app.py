@@ -5,7 +5,7 @@ import logging
 import config
 
 app = Flask(__name__)
-cors = CORS(app)
+CORS(app)
 
 # Configuration
 app.config.from_pyfile(config.__file__)
@@ -30,7 +30,6 @@ def directory():
 
 # Add a login route for demonstration
 @app.route('/login', methods=['POST'])
-@cross_origin()
 def login():
     # Your login logic here
     return jsonify(success=True)
