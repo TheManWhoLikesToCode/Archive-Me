@@ -1,5 +1,4 @@
 import logging
-import ray
 from backend.blackboard_scraper_S import (
     download_and_zip_content,
     log_into_blackboard,
