@@ -42,7 +42,6 @@ class TestBlackboardSession(unittest.TestCase):
 
         self.assertEqual(response, expected_error_message)
 
-    """     
     def test_failed_login_invalid_password(self):
 
         # selected a random username from usernames.py
@@ -62,8 +61,7 @@ class TestBlackboardSession(unittest.TestCase):
             "The password you entered was incorrect.", "Account has been disabled."
         ]
 
-        self.assertTrue(response in error_messages) 
-    """
+        self.assertTrue(response in error_messages)
 
     def test_failed_login_invalid_username(self):
         # Set up
@@ -290,6 +288,7 @@ class TestBlackboardSession(unittest.TestCase):
 
     # * Get Download Tasks *#
 
+
 def test_get_download_tasks_logged_in(self):
     # Set up
     username = 'Free8864'
@@ -364,7 +363,6 @@ def test_get_download_tasks_logged_in(self):
         self.assertTrue(session.downloadTasksFound)
         self.assertAlmostEqual(
             session.last_activity_time, time.time(), delta=1)
-
 
     def test_get_download_tasks_not_logged_in(self):
         # Set up
