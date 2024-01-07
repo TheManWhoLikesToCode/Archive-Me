@@ -19,7 +19,7 @@ jobs:
         path: 'backend'
     - name: Build and push the Docker image for backend
       run: |
-        docker build /backend -t themanwholikestocode/archive-me-prod:backend-$(date +%s)
+        docker build ./backend -t themanwholikestocode/archive-me-prod:backend-$(date +%s)
         echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         docker push themanwholikestocode/archive-me-prod:backend-$(date +%s)
 
@@ -32,6 +32,6 @@ jobs:
         path: 'frontend'
     - name: Build and push the Docker image for frontend
       run: |
-        docker build /frontend -t themanwholikestocode/archive-me-prod:frontend-$(date +%s)
+        docker build ./frontend -t themanwholikestocode/archive-me-prod:frontend-$(date +%s)
         echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         docker push themanwholikestocode/archive-me-prod:frontend-$(date +%s)
