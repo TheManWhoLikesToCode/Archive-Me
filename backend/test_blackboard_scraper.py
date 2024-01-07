@@ -188,6 +188,8 @@ class TestBlackboardSession(unittest.TestCase):
                     mock_logging_error.assert_called_once_with(
                         f"POST request failed with status code: {mock_post_request.return_value.status_code}")
 
+    # * Get Courses *#
+
     def test_get_courses_logged_in(self):
         # Set up
         username = 'Free8864'
@@ -285,6 +287,99 @@ class TestBlackboardSession(unittest.TestCase):
                 self.assertEqual(str(session.response), 'POST request failed.')
                 self.assertEqual(session.courses, {})
                 mock_logging_error.assert_called_once()
+
+    # * Get Download Tasks *#
+
+def test_get_download_tasks_logged_in(self):
+    # Set up
+    username = 'Free8864'
+    password = '#CFi^F6TTwot2j'
+    session = BlackboardSession(username=username, password=password)
+    session.is_logged_in = True
+    session.courses = {
+        'Course 1': 'course1_link',
+        'Course 2': 'course2_link'
+    }
+
+    with patch.object(session, '_get_request') as mock_get_request:
+        mock_get_request.side_effect = [
+            type('', (), {'status_code': 200, 'content': '''
+                <html>
+                    <body>
+                        <div id="containerdiv">
+                            <ul>
+                                <li>
+                                    <a href="/course1_link/assignment1">Assignment 1</a>
+                                    <div class="details">
+                                        <a href="download_link1">Download</a>
+                                    </div>
+                                </li>
+                                <li>
+                                    <a href="/course1_link/assignment2">Assignment 2</a>
+                                    <div class="details">
+                                        <a href="download_link2">Download</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </body>
+                </html>
+            '''}),
+            type('', (), {'status_code': 200, 'content': '''
+                <html>
+                    <body>
+                        <div id="containerdiv">
+                            <ul>
+                                <li>
+                                    <a href="/course2_link/assignment1">Assignment 1</a>
+                                    <div class="details">
+                                        <a href="download_link1">Download</a>
+                                    </div>
+                                </li>
+                                <li>
+                                    <a href="/course2_link/assignment2">Assignment 2</a>
+                                    <div class="details">
+                                        <a href="download_link2">Download</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </body>
+                </html>
+            '''})
+        ]
+
+        # Call the method
+        session.get_download_tasks()
+
+        # Assert the result
+        expected_result = [
+            ('Course 1', 'Assignment 1', 'download_link1'),
+            ('Course 1', 'Assignment 2', 'download_link2'),
+            ('Course 2', 'Assignment 1', 'download_link1'),
+            ('Course 2', 'Assignment 2', 'download_link2'),
+        ]
+
+        self.assertEqual(session.download_tasks, expected_result)
+        self.assertTrue(session.downloadTasksFound)
+        self.assertAlmostEqual(
+            session.last_activity_time, time.time(), delta=1)
+
+
+    def test_get_download_tasks_not_logged_in(self):
+        # Set up
+        username = 'Free8864'
+        password = '#CFi^F6TTwot2j'
+        session = BlackboardSession(username=username, password=password)
+        session.is_logged_in = False
+
+        # Execute get_download_tasks
+        session.get_download_tasks()
+
+        # Check the response
+        self.assertEqual(session.response, "Not logged in.")
+        self.assertFalse(session.downloadTasksFound)
+        self.assertIsNone(session.last_activity_time)
 
 
 if __name__ == '__main__':
