@@ -1,7 +1,6 @@
 ghostscript
 selenium
 flask
-ray
 argparse
 bs4
 gunicorn
