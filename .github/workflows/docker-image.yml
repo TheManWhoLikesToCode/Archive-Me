@@ -15,8 +15,7 @@ jobs:
     steps:
     - name: Checkout backend code
       uses: actions/checkout@v3
-      with:
-        path: 'backend'
+      
     - name: Build and push the Docker image for backend
       run: |
         docker build ./backend -t themanwholikestocode/archive-me-prod:backend-$(date +%s)
@@ -28,8 +27,7 @@ jobs:
     steps:
     - name: Checkout frontend code
       uses: actions/checkout@v3
-      with:
-        path: 'frontend'
+
     - name: Build and push the Docker image for frontend
       run: |
         docker build ./frontend -t themanwholikestocode/archive-me-prod:frontend-$(date +%s)
