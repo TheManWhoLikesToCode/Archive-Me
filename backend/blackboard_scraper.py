@@ -103,12 +103,46 @@ class BlackboardSession:
             logging.info("Session closed and deleted.")
         else:
             logging.warning("No active session to delete.")
+            
+    def scrape(self):
+
+        if self.is_logged_in == False:
+            self.response = "Not logged in."
+            return
+
+        self.enable_instructors()
+        if self.get_InstructorsFound() == False:
+            self.response = "No instructors found."
+
+        self.get_courses()
+        if self.courseFound == False or len(self.courses) == 0:
+            self.response = "No courses found."
+            return
+
+        self.get_download_tasks()
+        if self.downloadTasksFound == False or len(self.download_tasks) == 0:
+            self.response = "Failed to get download tasks."
+            return
+
+        file_key = self.download_and_save_file()
+        if self.zipFound == False or file_key == None:
+            self.response = "Failed to download and save file."
+            return
+
+        self.response = None
+        self.last_activity_time = time.time()
+        return file_key
 
     def login(self):
         """
 
         Logs into blackboard using the username and password provided using
         the requests library and saves the session cookies.
+        
+        self modifies:
+        is_logged_in -- A boolean value indicating if the user is logged in.
+        last_activity_time -- The time of the last activity.
+        response -- The response of the login attempt.
 
         """
         try:
@@ -158,36 +192,18 @@ class BlackboardSession:
         except Exception as e:
             logging.error(f"An error occurred during login: {e}")
 
-    def scrape(self):
-
-        if self.is_logged_in == False:
-            self.response = "Not logged in."
-            return
-
-        self.enable_instructors()
-        if self.get_InstructorsFound() == False:
-            self.response = "No instructors found."
-
-        self.get_courses()
-        if self.courseFound == False or len(self.courses) == 0:
-            self.response = "No courses found."
-            return
-
-        self.get_download_tasks()
-        if self.downloadTasksFound == False or len(self.download_tasks) == 0:
-            self.response = "Failed to get download tasks."
-            return
-
-        file_key = self.download_and_save_file()
-        if self.zipFound == False or file_key == None:
-            self.response = "Failed to download and save file."
-            return
-
-        self.response = None
-        self.last_activity_time = time.time()
-        return file_key
-
     def enable_instructors(self):
+        
+        """
+        
+        Enables instructors to be shown
+        
+        self modifies:
+        instructorsFound -- A boolean value indicating if instructors were found.
+        last_activity_time -- The time of the last activity.
+        response -- The response of the enable instructors attempt.
+        
+        """
 
         if self.is_logged_in == False:
             self.response = "Not logged in."
@@ -270,18 +286,24 @@ class BlackboardSession:
             logging.error(f"An error occurred enabling instructors: {e}")
 
     def get_courses(self):
-
-        if self.is_logged_in == False:
-            self.response = "Not logged in."
-            return
-
+        
         """
 
         Gets the courses the user is taking and stores in a dictionary 
         contained in the courses attribute. The key is the course name and
         the value is the link to the course.
+        
+        self modifies:
+        courses -- A dictionary of courses the user is taking.
+        courseFound -- A boolean value indicating if courses were found.
+        last_activity_time -- The time of the last activity.
+        response -- The response of the get courses attempt.
 
         """
+
+        if self.is_logged_in == False:
+            self.response = "Not logged in."
+            return
 
         try:
             form_data = {
@@ -361,6 +383,11 @@ class BlackboardSession:
         """
 
         Downloads and saves the taks passed from the get dwonload tasks function.
+        
+        self modifies:
+        zipFound -- A boolean value indicating if the zip file was found.
+        last_activity_time -- The time of the last activity.
+        response -- The response of the download and save file attempt.
 
         """
 
@@ -428,17 +455,24 @@ class BlackboardSession:
         return os.path.relpath(zip_file_path, os.getcwd())
 
     def get_download_tasks(self):
-
-        if self.is_logged_in == False:
-            self.response = "Not logged in."
-            return
-
+        
         """
 
         Gets a list of download tasks to be executed by collection all of the 
         "downlaodable" coneent from each course.
+        
+        self modifies:
+        download_tasks -- A list of download tasks to be executed.
+        downloadTasksFound -- A boolean value indicating if download tasks were found.
+        last_activity_time -- The time of the last activity.
+        response -- The response of the get download tasks attempt.
 
         """
+
+        if self.is_logged_in == False:
+            self.response = "Not logged in."
+            return
+        
         download_tasks = []
 
         hrefs = self.courses

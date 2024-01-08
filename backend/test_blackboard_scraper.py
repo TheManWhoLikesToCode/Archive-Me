@@ -5,6 +5,57 @@ from blackboard_scraper import BlackboardSession
 from unittest.mock import patch
 from usernames import usernames
 
+""""
+Test Case Senarios:
+
+#* Login *#
+
+- Valid credentials
+- Invalid username
+- Invalid password
+- Invalid username and password
+
+# TODO:
+
+- Failed GET request
+- Failed POST request
+- HTML parsing failed
+
+#* Enable Instructors *#
+
+- Logged in
+- Not logged in
+- GET request failed
+- POST request failed
+
+# TODO:
+
+- HTML parsing failed
+- No instructors found
+- Instructors found
+
+#* Get Courses *#
+
+- Logged in
+- Not logged in
+- No courses
+- Error finding course list
+
+# TODO:
+
+- HTML parsing failed
+
+#* Get Download Tasks *#
+
+- Logged in
+- Not logged in
+
+# TODO:
+
+- HTML parsing failed
+
+"""
+
 
 class TestBlackboardSession(unittest.TestCase):
 
@@ -364,20 +415,20 @@ def test_get_download_tasks_logged_in(self):
         self.assertAlmostEqual(
             session.last_activity_time, time.time(), delta=1)
 
-    def test_get_download_tasks_not_logged_in(self):
-        # Set up
-        username = 'Free8864'
-        password = '#CFi^F6TTwot2j'
-        session = BlackboardSession(username=username, password=password)
-        session.is_logged_in = False
+def test_get_download_tasks_not_logged_in(self):
+    # Set up
+    username = 'Free8864'
+    password = '#CFi^F6TTwot2j'
+    session = BlackboardSession(username=username, password=password)
+    session.is_logged_in = False
 
-        # Execute get_download_tasks
-        session.get_download_tasks()
+    # Execute get_download_tasks
+    session.get_download_tasks()
 
-        # Check the response
-        self.assertEqual(session.response, "Not logged in.")
-        self.assertFalse(session.downloadTasksFound)
-        self.assertIsNone(session.last_activity_time)
+    # Check the response
+    self.assertEqual(session.response, "Not logged in.")
+    self.assertFalse(session.downloadTasksFound)
+    self.assertIsNone(session.last_activity_time)
 
 
 if __name__ == '__main__':
