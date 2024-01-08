@@ -23,7 +23,6 @@ jobs:
         docker tag themanwholikestocode/archive-me-prod:backend-$TIMESTAMP domain.com/repo/tag_docker_name:latest
         echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         docker push themanwholikestocode/archive-me-prod:backend-$TIMESTAMP
-        docker push domain.com/repo/tag_docker_name:latest
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -38,4 +37,3 @@ jobs:
         docker tag themanwholikestocode/archive-me-prod:frontend-$TIMESTAMP domain.com/repo/tag_docker_name:latest
         echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         docker push themanwholikestocode/archive-me-prod:frontend-$TIMESTAMP
-        docker push domain.com/repo/tag_docker_name:latest
