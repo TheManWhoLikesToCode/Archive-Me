@@ -1,5 +1,5 @@
 
-# Blackboard Scraper
+# Archive-Me
 
 Archive Me is a tool for students to easily archive and track their course materials on Blackboard. It helps students store and organize their coursework for long-term access and reference. This tool is useful for college students to preserve their academic records.
 
