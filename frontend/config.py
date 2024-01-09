@@ -1,12 +1,30 @@
-# config.py
+import os
 
-# Flask configuration
-DEBUG = True  # Set to False in production
-PORT = 5002  # Port number for the Flask server
+API_URL = ''
+class Config:
+    DEBUG = False
+    PORT = 5002
 
-# CORS Configurations
-CORS_HEADERS = 'Content-Type'
 
-# Security configurations
-# It's advisable to use environment variables for sensitive data
-# Example: SECRET_KEY = os.environ.get('SECRET_KEY') or 'a-default-secret'
+class DevelopmentConfig(Config):
+    DEBUG = True
+    URL = 'http://localhost:5001'
+    API_URL = 'http://localhost:5001/'
+
+
+class ProductionConfig(Config):
+    URL = 'https://api.archive-me.net'
+    API_URL = 'https://api.archive-me.net/api'
+
+
+def get_config():
+    env = os.environ.get('FLASK_ENV', 'development')
+    match env:
+        case 'production':
+            return ProductionConfig
+        case _:
+            return DevelopmentConfig
+
+
+config = get_config()
+API_URL = config.API_URL

@@ -83,7 +83,8 @@ $(function () {
 const app = (() => {
   let fileKeyGlobal = null;
   let currentPath = '';
-  const apiUrl = 'https://api.archive-me.net';
+  const apiUrl = API_URL;
+
 
   const showLoadingScreen = () => {
     const loadingScreen = document.getElementById("loading-screen");
