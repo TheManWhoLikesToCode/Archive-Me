@@ -13,34 +13,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout backend code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to DockerHub
       run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
     - name: Build and push the Docker image for backend
-      run: |
-        if [ ${{ github.event_name }} == 'pull_request' ]; then
-          DOCKER_IMAGE_TAG=development
-        else
-          DOCKER_IMAGE_TAG=production
-        fi
-        docker buildx build ./backend --file ./backend/Dockerfile --tag themanwholikestocode/archive-me-prod:backend-$DOCKER_IMAGE_TAG --platform=linux/arm64 --push
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
 
   frontend-build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout frontend code
       uses: actions/checkout@v3
-
+  
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+  
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+  
     - name: Login to DockerHub
       run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-
+  
     - name: Build and push the Docker image for frontend
-      run: |
-        if [ ${{ github.event_name }} == 'pull_request' ]; then
-          DOCKER_IMAGE_TAG=development
-        else
-          DOCKER_IMAGE_TAG=production
-        fi
-        docker buildx build ./frontend --file ./frontend/Dockerfile --tag themanwholikestocode/archive-me-prod:frontend-$DOCKER_IMAGE_TAG --platform=linux/amd64 --push
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
