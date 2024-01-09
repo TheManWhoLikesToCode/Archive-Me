@@ -1,30 +1,46 @@
-name: Run Blackboard Session Tests
+name: Docker Image CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
+  release:
+    types: [published]
 
 jobs:
-  test:
+  backend-build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout backend code
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
+    - name: Login to DockerHub
+      run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      - name: Install backend dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+    - name: Build and push the Docker image for backend
+      run: |
+        if [ ${{ github.event_name }} == 'pull_request' ]; then
+          DOCKER_IMAGE_TAG=development
+        else
+          DOCKER_IMAGE_TAG=production
+        fi
+        docker buildx build ./backend --file ./backend/Dockerfile --tag themanwholikestocode/archive-me-prod:backend-$DOCKER_IMAGE_TAG --platform=linux/arm64 --push
 
-      - name: Run tests
-        run: |
-          python backend/test_blackboard_scraper.py
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout frontend code
+      uses: actions/checkout@v3
+
+    - name: Login to DockerHub
+      run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+    - name: Build and push the Docker image for frontend
+      run: |
+        if [ ${{ github.event_name }} == 'pull_request' ]; then
+          DOCKER_IMAGE_TAG=development
+        else
+          DOCKER_IMAGE_TAG=production
+        fi
+        docker buildx build ./frontend --file ./frontend/Dockerfile --tag themanwholikestocode/archive-me-prod:frontend-$DOCKER_IMAGE_TAG --platform=linux/amd64 --push
