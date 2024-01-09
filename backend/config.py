@@ -18,12 +18,8 @@ class ProductionConfig(Config):
 
 
 def get_config():
-    env = os.environ.get('FLASK_ENV', 'development')
-    match env:
-        case 'production':
-            return ProductionConfig
-        case _:
-            return DevelopmentConfig
+    env = os.getenv('FLASK_ENV', 'development')
+    return ProductionConfig if env == 'production' else DevelopmentConfig
 
 
 config = get_config()
