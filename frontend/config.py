@@ -10,13 +10,13 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    URL = 'http://localhost:5001'
-    API_URL = 'http://localhost:5001/'
+    URL = '0.0.0.0'
+    API_URL = '0.0.0.0/5001'
 
 
 class ProductionConfig(Config):
-    URL = 'https://api.archive-me.net'
-    API_URL = 'https://api.archive-me.net/api'
+    URL = '0.0.0.0'
+    API_URL = 'https://api.archive-me.net'
 
 
 def get_config():
