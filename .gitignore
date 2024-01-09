@@ -5,3 +5,4 @@ client_secrets.json
 *.pyc
 mycreds.txt
 backend/settings.yaml
+backend/.env
