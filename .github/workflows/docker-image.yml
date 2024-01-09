@@ -39,6 +39,6 @@ jobs:
         else
           DOCKER_IMAGE_TAG=production
         fi
-        docker build ./frontend -t themanwholikestocode/archive-me-prod:frontend-$DOCKER_IMAGE_TAG --platform=linux/amd64
+        docker build ./frontend -t themanwholikestocode/archive-me-prod:frontend-$DOCKER_IMAGE_TAG --platform=linux/arm64
         echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         docker push themanwholikestocode/archive-me-prod:frontend-$DOCKER_IMAGE_TAG
