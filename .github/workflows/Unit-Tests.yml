@@ -29,7 +29,7 @@ jobs:
       with:
         context: ./backend
         file: ./backend/Dockerfile
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/arm64
         push: true
         tags: |
           themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
@@ -54,7 +54,7 @@ jobs:
       with:
         context: ./frontend
         file: ./frontend/Dockerfile
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/arm64
         push: true
         tags: |
           themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
