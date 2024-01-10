@@ -6,6 +6,7 @@ import uuid
 from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
+import yaml
 from blackboard_scraper import BlackboardSession
 from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
 import config
@@ -50,17 +51,14 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
 
 
 def authorize_drive():
-    gauth = GoogleAuth(settings_file='settings.yaml')
-    creds = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+    with open('settings.yaml', 'r') as file:
+        settings = yaml.safe_load(file)
 
-    if not creds:
-        creds = os.environ.get("GOOGLE_DRIVE_CREDENTIALS")
+    settings['client_config']['client_id'] = os.environ.get('GOOGLE_CLIENT_ID')
+    settings['client_config']['client_secret'] = os.environ.get('GOOGLE_CLIENT_SECRET')
 
-    if creds:
-        gauth.LoadCredentialsFile(creds)
-    else:
-        app.logger.error("Error loading Google Drive credentials")
-        return None
+    gauth = GoogleAuth(settings=settings)
+    gauth.LocalWebserverAuth()
     drive = GoogleDrive(gauth)
     return drive
 
