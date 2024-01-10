@@ -7,4 +7,4 @@ gunicorn
 flask_cors
 flask_apscheduler
 pydrive2
-dotenv
+python-dotenv
