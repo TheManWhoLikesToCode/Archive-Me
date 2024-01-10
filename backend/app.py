@@ -3,13 +3,17 @@ import os
 import threading
 import time
 import uuid
+
+from dotenv import load_dotenv
 from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
 import yaml
+
 from blackboard_scraper import BlackboardSession
 from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
 import config
+
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
@@ -23,6 +27,9 @@ app.config.from_pyfile(config.__file__)
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
 
+# Import dot env variables
+load_dotenv()
+
 
 def is_file_valid(file_path):
     return os.path.isfile(file_path) and not os.path.islink(file_path)
@@ -35,9 +42,10 @@ def remove_file_safely(file_path):
     except OSError as error:
         app.logger.error(f"Error removing file: {error}")
 
+
 @scheduler.task('interval', id='clean_up', seconds=600)
 def clean_up_and_upload_files_to_google_drive(file_path=None):
-    
+
     if file_path:
         remove_file_safely(file_path)
 
@@ -55,11 +63,17 @@ def authorize_drive():
         settings = yaml.safe_load(file)
 
     settings['client_config']['client_id'] = os.environ.get('GOOGLE_CLIENT_ID')
-    settings['client_config']['client_secret'] = os.environ.get('GOOGLE_CLIENT_SECRET')
+    settings['client_config']['client_secret'] = os.environ.get(
+        'GOOGLE_CLIENT_SECRET')
 
     gauth = GoogleAuth(settings=settings)
-    gauth.LoadCredentialsFile("credentials.json")
-    
+
+    if os.path.isfile("credentials.json"):
+        gauth.LoadCredentialsFile("credentials.json")
+    else:
+        gauth.LocalWebserverAuth()
+        gauth.SaveCredentialsFile("credentials.json")
+
     drive = GoogleDrive(gauth)
     return drive
 
@@ -137,6 +151,7 @@ def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
 @cross_origin()
 def index():
     return jsonify({'message': "Welcome to the ArchiveMe's Blackboard Scraper API"})
+
 
 @app.route('/login', methods=['POST'])
 @cross_origin()
@@ -228,9 +243,9 @@ def list_directory(path):
     # Check if there's only one file returned
     if len(items) == 1 and items[0][3] == 'FILE':
         # Assuming 'file_id' and 'file_name' are available based on the user selection
-        file_id = items[0][2]  
-        file_name = items[0][0] 
-        
+        file_id = items[0][2]
+        file_name = items[0][0]
+
         # Update the session_files_path based on the current directory and create if it doesn't exist
         current_dir = os.path.dirname(os.path.abspath(__file__))
         if os.path.basename(current_dir) != 'backend':
@@ -243,9 +258,9 @@ def list_directory(path):
         if not os.path.exists(session_files_path):
             os.makedirs(session_files_path)
         full_path = os.path.join(session_files_path, file_name)
-        
+
         file = drive.CreateFile({'id': file_id})
-        print('Downloading file %s from Google Drive' % file_name) 
+        print('Downloading file %s from Google Drive' % file_name)
         file.GetContentFile(full_path)
 
         @after_this_request
@@ -254,9 +269,9 @@ def list_directory(path):
                 target=clean_up_and_upload_files_to_google_drive, args=(full_path,))
             thread.start()
             return response
-        
+
         return send_from_directory(session_files_path, file_name, as_attachment=True)
-    
+
     return jsonify(items)
 
 
@@ -266,7 +281,7 @@ def list_root_directory():
 
 
 if __name__ == '__main__':
-    
+
     drive = authorize_drive()
 
     if not drive:
