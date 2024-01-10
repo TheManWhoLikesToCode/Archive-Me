@@ -51,9 +51,12 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
 
 def authorize_drive():
     gauth = GoogleAuth(settings_file='settings.yaml')
-    gauth.LocalWebserverAuth()
-    creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-    gauth.credentials = creds
+    creds = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+    if creds:
+        gauth.LoadCredentialsFile(creds)
+    else:
+        app.logger.error("Error loading Google Drive credentials")
+        return None
     drive = GoogleDrive(gauth)
     return drive
 
@@ -262,6 +265,10 @@ def list_root_directory():
 if __name__ == '__main__':
     
     drive = authorize_drive()
+
+    if not drive:
+        app.logger.error("Error authorizing Google Drive")
+        exit(1)
 
     team_drive_id = '0AFReXfsUal4rUk9PVA'
 
