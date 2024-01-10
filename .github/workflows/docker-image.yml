@@ -33,6 +33,9 @@ jobs:
         push: true
         tags: |
           themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
+        build-args: |
+          CLIENT_SECRET_JSON=${{ secrets.CLIENT_SECRET_JSON }}
+          
   frontend-build:
     runs-on: ubuntu-latest
     steps:
