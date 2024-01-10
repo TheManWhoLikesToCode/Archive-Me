@@ -58,7 +58,8 @@ def authorize_drive():
     settings['client_config']['client_secret'] = os.environ.get('GOOGLE_CLIENT_SECRET')
 
     gauth = GoogleAuth(settings=settings)
-    gauth.LocalWebserverAuth()
+    gauth.LoadCredentialsFile("credentials.json")
+    
     drive = GoogleDrive(gauth)
     return drive
 
