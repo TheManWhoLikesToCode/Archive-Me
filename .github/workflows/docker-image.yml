@@ -35,6 +35,8 @@ jobs:
           themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
         build-args: |
           CLIENT_SECRET_JSON=${{ secrets.CLIENT_SECRET_JSON }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           
   frontend-build:
     runs-on: ubuntu-latest
