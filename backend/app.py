@@ -74,6 +74,10 @@ def authorize_drive():
         gauth.LocalWebserverAuth()
         gauth.SaveCredentialsFile("credentials.json")
 
+    if gauth.access_token_expired:
+        gauth.Refresh()
+        gauth.SaveCredentialsFile("credentials.json")
+    
     drive = GoogleDrive(gauth)
     return drive
 
