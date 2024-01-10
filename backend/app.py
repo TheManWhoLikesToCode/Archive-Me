@@ -52,6 +52,10 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
 def authorize_drive():
     gauth = GoogleAuth(settings_file='settings.yaml')
     creds = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+
+    if not creds:
+        creds = os.environ.get("GOOGLE_DRIVE_CREDENTIALS")
+
     if creds:
         gauth.LoadCredentialsFile(creds)
     else:
