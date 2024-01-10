@@ -3,9 +3,6 @@ client_secrets_file: client_secrets.json
 client_config:
   client_id: ${GOOGLE_CLIENT_ID}
   client_secret: ${GOOGLE_CLIENT_SECRET}
-  auth_uri: https://accounts.google.com/o/oauth2/auth
-  token_uri: https://oauth2.googleapis.com/token
-  redirect_uri: http://localhost:8080
 
 save_credentials: True
 save_credentials_backend: file
