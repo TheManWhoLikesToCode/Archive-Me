@@ -14,8 +14,10 @@ ARG CLIENT_CREDENTIALS_JSON
 ENV CLIENT_CREDENTIALS_JSON=$CLIENT_CREDENTIALS_JSON
 RUN echo "$CLIENT_CREDENTIALS_JSON" > /backend/credentials.json
 
-RUN pip install -r requirements.txt
+ARG PORT
+ENV PORT=$PORT
+EXPOSE $PORT
 
-EXPOSE 5001
+RUN pip install -r requirements.txt
 
 CMD python ./app.py

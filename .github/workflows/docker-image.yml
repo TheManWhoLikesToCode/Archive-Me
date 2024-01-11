@@ -8,6 +8,12 @@ on:
   release:
     types: [published]
 
+env:
+  PROD_BACKEND_PORT: 5001
+  DEV_BACKEND_PORT: 5003
+  PROD_FRONTEND_PORT: 5002
+  DEV_FRONTEND_PORT: 5004
+
 jobs:
   backend-build:
     runs-on: ubuntu-latest
@@ -32,11 +38,12 @@ jobs:
         platforms: linux/arm64
         push: true
         tags: |
-          themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
+          themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && 'development' || 'production' }}
         build-args: |
           CLIENT_CREDENTIALS_JSON=${{ secrets.CLIENT_CREDENTIALS_JSON }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          PORT=${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && env.DEV_BACKEND_PORT || env.PROD_BACKEND_PORT }}
           
   frontend-build:
     runs-on: ubuntu-latest
@@ -61,4 +68,6 @@ jobs:
         platforms: linux/arm64
         push: true
         tags: |
-          themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
+          themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && 'development' || 'production' }}
+        build-args: |
+          PORT=${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && env.DEV_FRONTEND_PORT || env.PROD_FRONTEND_PORT }}
