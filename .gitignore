@@ -2,6 +2,7 @@ backend/client_secrets.json
 client_secrets.json
 mycreds.txt
 backend/.env
+frontend/.env
 *.pyc
 *.DS_Store
 backend/support/.DS_Store

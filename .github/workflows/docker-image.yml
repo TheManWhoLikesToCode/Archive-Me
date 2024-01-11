@@ -38,7 +38,7 @@ jobs:
         platforms: linux/arm64
         push: true
         tags: |
-          themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && 'development' || 'production' }}
+          themanwholikestocode/archive-me-prod:backend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
         build-args: |
           CLIENT_CREDENTIALS_JSON=${{ secrets.CLIENT_CREDENTIALS_JSON }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
@@ -68,6 +68,6 @@ jobs:
         platforms: linux/arm64
         push: true
         tags: |
-          themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && 'development' || 'production' }}
+          themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
         build-args: |
           PORT=${{ github.event_name != 'pull_request' && env.PROD_FRONTEND_PORT || env.DEV_FRONTEND_PORT }}
