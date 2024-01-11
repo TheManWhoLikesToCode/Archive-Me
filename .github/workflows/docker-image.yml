@@ -43,7 +43,7 @@ jobs:
           CLIENT_CREDENTIALS_JSON=${{ secrets.CLIENT_CREDENTIALS_JSON }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          PORT=${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' && env.DEV_BACKEND_PORT || env.PROD_BACKEND_PORT }}
+          PORT=${{ (github.event_name == 'pull_request' || github.ref == 'refs/heads/main') && env.DEV_BACKEND_PORT || env.PROD_BACKEND_PORT }}
           
   frontend-build:
     runs-on: ubuntu-latest
