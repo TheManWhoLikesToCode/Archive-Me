@@ -2,7 +2,6 @@
 
 # Flask configuration
 DEBUG = True  # Set to False in production
-PORT = 5002  # Port number for the Flask server
 
 # CORS Configurations
 CORS_HEADERS = 'Content-Type'
