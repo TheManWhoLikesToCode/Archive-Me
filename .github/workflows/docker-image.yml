@@ -43,7 +43,7 @@ jobs:
           CLIENT_CREDENTIALS_JSON=${{ secrets.CLIENT_CREDENTIALS_JSON }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          ENVIRONTMENT=${{ github.event_name == 'pull_request' && 'development' || 'production' }}
+          ENVIRONMENT=${{ github.event_name == 'pull_request' && 'dev' || 'prod' }}
           PORT=${{ github.event_name != 'pull_request' && env.PROD_BACKEND_PORT || env.DEV_BACKEND_PORT }}
           
   frontend-build:
@@ -71,5 +71,5 @@ jobs:
         tags: |
           themanwholikestocode/archive-me-prod:frontend-${{ github.event_name == 'pull_request' && 'development' || 'production' }}
         build-args: |
-          ENVIRONTMENT=${{ github.event_name == 'pull_request' && 'development' || 'production' }}
+          ENVIRONMENT=${{ github.event_name == 'pull_request' && 'dev' || 'prod' }}
           PORT=${{ github.event_name != 'pull_request' && env.PROD_FRONTEND_PORT || env.DEV_FRONTEND_PORT }}
