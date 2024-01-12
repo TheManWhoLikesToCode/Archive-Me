@@ -8,6 +8,11 @@ function getEnv() {
 }
 
 function getApiUrl() {
+    
+    if (!config.apiUrl[getEnv()]) {
+        throw new Error('Api url not found.');
+    }
+
     return config.apiUrl[getEnv()]
 }
 

@@ -1,5 +1,3 @@
-import { getApiUrl } from "./helpers";
-
 $(function () {
   // init feather icons
   feather.replace();
