@@ -6,4 +6,9 @@ ADD . /frontend
 
 RUN pip install -r requirements.txt
 
+ARG PORT
+ENV PORT=$PORT
+
+EXPOSE $PORT
+
 CMD python ./app.py
