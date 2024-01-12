@@ -1,3 +1,5 @@
+import { getApiUrl } from "./helpers";
+
 $(function () {
   // init feather icons
   feather.replace();
@@ -83,7 +85,8 @@ $(function () {
 const app = (() => {
   let fileKeyGlobal = null;
   let currentPath = '';
-  const apiUrl = 'https://api.archive-me.net';
+  
+  const apiUrl = getApiUrl();
 
   const showLoadingScreen = () => {
     const loadingScreen = document.getElementById("loading-screen");

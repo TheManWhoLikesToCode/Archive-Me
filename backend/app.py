@@ -59,7 +59,16 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
 
 
 def authorize_drive():
-    with open('settings.yaml', 'r') as file:
+    current_directory = os.getcwd()
+
+    if 'backend' in current_directory:
+        settings_path = 'settings.yaml'
+    elif 'Archive-Me' in current_directory:
+        settings_path = 'backend/settings.yaml'
+    else:
+        raise Exception("Unable to locate settings file.")
+
+    with open(settings_path, 'r') as file:
         settings = yaml.safe_load(file)
 
     settings['client_config']['client_id'] = os.environ.get('GOOGLE_CLIENT_ID')

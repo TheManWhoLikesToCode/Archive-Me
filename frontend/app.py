@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, abort
+from flask import Flask, render_template
 from flask_cors import CORS, cross_origin
 import os
 import logging
@@ -28,11 +28,6 @@ def demo():
 def directory():
     return render_template('directory.html')
 
-# Add a login route for demonstration
-@app.route('/login', methods=['POST'])
-def login():
-    # Your login logic here
-    return jsonify(success=True)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=app.config['PORT'], debug=app.config['DEBUG'])
