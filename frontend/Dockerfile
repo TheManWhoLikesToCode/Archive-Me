@@ -6,6 +6,9 @@ ADD . /frontend
 
 RUN pip install -r requirements.txt
 
+ARG ENVIRONMENT
+ENV ENVIRONMENT=$ENVIRONMENT
+
 ARG PORT
 ENV PORT=$PORT
 
