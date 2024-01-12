@@ -84,10 +84,10 @@ class BlackboardSession:
 
     def get_response(self):
         return self.response
-    
+
     def get_InstructorsFound(self):
         return self.instructorsFound
-    
+
     def set_InstructorsFound(self, instructorsFound):
         self.instructorsFound = instructorsFound
 
@@ -103,7 +103,7 @@ class BlackboardSession:
             logging.info("Session closed and deleted.")
         else:
             logging.warning("No active session to delete.")
-            
+
     def scrape(self):
 
         if self.is_logged_in == False:
@@ -138,7 +138,7 @@ class BlackboardSession:
 
         Logs into blackboard using the username and password provided using
         the requests library and saves the session cookies.
-        
+
         self modifies:
         is_logged_in -- A boolean value indicating if the user is logged in.
         last_activity_time -- The time of the last activity.
@@ -193,16 +193,15 @@ class BlackboardSession:
             logging.error(f"An error occurred during login: {e}")
 
     def enable_instructors(self):
-        
         """
-        
+
         Enables instructors to be shown
-        
+
         self modifies:
         instructorsFound -- A boolean value indicating if instructors were found.
         last_activity_time -- The time of the last activity.
         response -- The response of the enable instructors attempt.
-        
+
         """
 
         if self.is_logged_in == False:
@@ -286,13 +285,12 @@ class BlackboardSession:
             logging.error(f"An error occurred enabling instructors: {e}")
 
     def get_courses(self):
-        
         """
 
         Gets the courses the user is taking and stores in a dictionary 
         contained in the courses attribute. The key is the course name and
         the value is the link to the course.
-        
+
         self modifies:
         courses -- A dictionary of courses the user is taking.
         courseFound -- A boolean value indicating if courses were found.
@@ -318,7 +316,7 @@ class BlackboardSession:
                 raise Exception("POST request failed.")
 
             # Parse the response using Beautiful Soup with lxml parser
-            soup = BeautifulSoup(get_courses_response.content, "html.parser")
+            soup = BeautifulSoup(get_courses_response.content, "lxml")
 
             # Check if the user is not enrolled in any courses
             no_courses_text = 'You are not currently enrolled in any courses.'
@@ -327,7 +325,7 @@ class BlackboardSession:
                 return
 
             try:
-                div_4_1 = soup.find("div", id="_4_1termCourses__254_1")
+                div_4_1 = soup.find("div", id=re.compile(r"^_4_1termCourses"))
                 courses_list = div_4_1.find_all("ul")[0].find_all("li")
             except Exception as e:
                 logging.error(f"Error finding course list: {e}")
@@ -367,6 +365,7 @@ class BlackboardSession:
                         continue
 
             self.courses = hrefs
+            self.courseFound = True
             self.last_activity_time = time.time()
 
         except Exception as e:
@@ -425,7 +424,7 @@ class BlackboardSession:
                     extension = guessed_extension or current_extension
             else:
                 if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
-                    extension = '.html'
+                    return
                 else:
                     extension = guessed_extension or '.bin'
 
@@ -455,12 +454,11 @@ class BlackboardSession:
         return os.path.relpath(zip_file_path, os.getcwd())
 
     def get_download_tasks(self):
-        
         """
 
         Gets a list of download tasks to be executed by collection all of the 
         "downlaodable" coneent from each course.
-        
+
         self modifies:
         download_tasks -- A list of download tasks to be executed.
         downloadTasksFound -- A boolean value indicating if download tasks were found.
@@ -472,7 +470,7 @@ class BlackboardSession:
         if self.is_logged_in == False:
             self.response = "Not logged in."
             return
-        
+
         download_tasks = []
 
         hrefs = self.courses
