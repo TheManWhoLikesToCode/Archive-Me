@@ -1,12 +1,22 @@
 # config.py
+import os
+from dotenv import load_dotenv
+import sys
 
 # Flask configuration
-DEBUG = True  # Set to False in production
-PORT = 5002  # Port number for the Flask server
+load_dotenv()
+
+env = os.environ.get('ENVIRONMENT')
+
+if env == 'dev':
+    PORT = 5004
+    DEBUG = True
+elif env == 'prod':
+    PORT = 5002
+    DEBUG = False
+else:
+    print("Environment not specified. Please provide a valid environment.")
+    sys.exit(1)
 
 # CORS Configurations
 CORS_HEADERS = 'Content-Type'
-
-# Security configurations
-# It's advisable to use environment variables for sensitive data
-# Example: SECRET_KEY = os.environ.get('SECRET_KEY') or 'a-default-secret'

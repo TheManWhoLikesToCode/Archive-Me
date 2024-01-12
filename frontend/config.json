@@ -1,0 +1,6 @@
+{
+    "apiUrl":{
+        "dev":"http://localhost:5003",
+        "prod":"https://api.archive-me.net"
+    }
+}

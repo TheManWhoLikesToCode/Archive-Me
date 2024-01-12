@@ -1,7 +1,8 @@
-
 backend/client_secrets.json
 client_secrets.json
-*.pyc
-*.pyc
 mycreds.txt
-backend/settings.yaml
+backend/.env
+frontend/.env
+*.pyc
+*.DS_Store
+backend/support/.DS_Store

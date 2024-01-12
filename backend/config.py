@@ -1,6 +1,18 @@
 # config.py
-from selenium.webdriver.chrome.options import Options
-
+import os
+from dotenv import load_dotenv
+import sys
 # Flask configuration
-DEBUG = True  # Set to False in production
-PORT = 5001  # Port number for the Flask server
+load_dotenv()
+
+env = os.environ.get('ENVIRONMENT')
+
+if env == 'dev':
+    PORT = 5003
+    DEBUG = True
+elif env == 'prod':
+    PORT = 5001
+    DEBUG = False
+else:
+    print("Environment not specified. Please provide a valid environment.")
+    sys.exit(1)
