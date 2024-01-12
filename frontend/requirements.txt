@@ -6,3 +6,4 @@ argparse
 bs4
 gunicorn
 flask_cors
+python-dotenv
