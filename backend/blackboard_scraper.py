@@ -166,9 +166,10 @@ class BlackboardSession:
                 'j_password': self.password,
                 '_eventId_proceed': ''
             }
+
             login_send_response = self._send_post_request(
                 int_login_page_response.url, data=final_payload)
-
+            
             # parse the response using Beautiful Soup with html parser
             soup = BeautifulSoup(login_send_response.content, "html.parser")
 
@@ -218,6 +219,22 @@ class BlackboardSession:
 
                 # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
                 soup = BeautifulSoup(get_response.content, "html.parser")
+                course_table = soup.find_all(
+                    attrs={"id": re.compile(r'blockAttributes_table_jsListFULL_Student_\d+_\d+_body')})
+                if not course_table:
+                    raise Exception("Course table not found.")
+
+                course_rows = course_table[0].find_all('tr')
+                if not course_rows:
+                    raise Exception("Course rows not found.")
+
+                for row in course_rows:
+                    course_id_match = re.search(
+                        r'FULL_Student_\d+_\d+_row:_(\d+_\d+)', row.get('id', ''))
+                    if course_id_match:
+                        course_id = course_id_match.group(1)
+                        course_ids.append(course_id)
+
                 nonce_value = soup.select_one(
                     '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
 
@@ -278,7 +295,7 @@ class BlackboardSession:
 
             except Exception as e:
                 logging.error(
-                    f"GET request failed with status code: {get_response.status_code}")
+                    f"An error occurred enabling instructors: {e}")
                 return
 
         except Exception as e:
