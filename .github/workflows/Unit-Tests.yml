@@ -27,4 +27,5 @@ jobs:
 
       - name: Run tests
         run: |
-          python backend/test_blackboard_scraper.py
+          python backend/test_blackboard_scraper.py ${{ secrets.TEST_USERNAME }} ${{ secrets.TEST_PASSWORD }}
+
