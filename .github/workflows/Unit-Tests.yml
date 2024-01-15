@@ -26,6 +26,8 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run tests
+        env:
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: |
-          python backend/test_blackboard_scraper.py --username ${{ secrets.TEST_USERNAME }} --password ${{ secrets.TEST_PASSWORD }}
-
+          python backend/test_blackboard_scraper.py

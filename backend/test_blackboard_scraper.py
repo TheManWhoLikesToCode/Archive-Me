@@ -9,16 +9,6 @@ from blackboard_scraper import BlackboardSession
 from unittest.mock import patch
 from usernames import usernames
 
-# Create the parser
-parser = argparse.ArgumentParser(description='Test BlackboardSession')
-
-# Add the arguments
-parser.add_argument('--username', type=str, help='Username for login')
-parser.add_argument('--password', type=str, help='Password for login')
-
-# Parse the arguments
-args = parser.parse_args()
-
 """"
 Test Case Senarios:
 
@@ -75,8 +65,8 @@ class TestBlackboardSession(unittest.TestCase):
 
     def setUp(self):
         load_dotenv()
-        self.username = args.username if args.username else os.getenv('TEST_USERNAME')
-        self.password = args.password if args.password else os.getenv('TEST_PASSWORD')
+        self.username = os.environ.get('TEST_USERNAME')
+        self.password = os.environ.get('TEST_PASSWORD')
 
     # * Login Tests *#
 
