@@ -8,3 +8,4 @@ flask_cors
 flask_apscheduler
 pydrive2
 python-dotenv
+pytest
