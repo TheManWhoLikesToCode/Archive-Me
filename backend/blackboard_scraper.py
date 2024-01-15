@@ -169,7 +169,7 @@ class BlackboardSession:
 
             login_send_response = self._send_post_request(
                 int_login_page_response.url, data=final_payload)
-            
+
             # parse the response using Beautiful Soup with html parser
             soup = BeautifulSoup(login_send_response.content, "html.parser")
 
@@ -288,8 +288,7 @@ class BlackboardSession:
                     self.set_InstructorsFound(True)
                 else:
                     self.set_InstructorsFound(False)
-                    logging.error(
-                        f"POST request failed with status code: {enable_instructors_response.status_code}")
+                    raise Exception("POST request failed.")
 
                 self.last_activity_time = time.time()
 
@@ -391,21 +390,20 @@ class BlackboardSession:
             logging.error(f"An error occurred while getting courses: {e}")
 
     def download_and_save_file(self):
-
-        if self.is_logged_in == False:
-            self.response = "Not logged in."
-            return
-
         """
 
         Downloads and saves the taks passed from the get dwonload tasks function.
-        
+
         self modifies:
         zipFound -- A boolean value indicating if the zip file was found.
         last_activity_time -- The time of the last activity.
         response -- The response of the download and save file attempt.
 
         """
+
+        if self.is_logged_in == False:
+            self.response = "Not logged in."
+            return
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         if os.path.basename(current_dir) != 'backend':
