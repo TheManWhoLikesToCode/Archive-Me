@@ -217,6 +217,8 @@ class BlackboardSession:
                 if get_response.status_code != 200:
                     raise Exception("GET request failed.")
 
+                course_ids = []
+
                 # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
                 soup = BeautifulSoup(get_response.content, "html.parser")
                 course_table = soup.find_all(
@@ -246,26 +248,6 @@ class BlackboardSession:
                     'recallUrl': '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1',
                     'cmd': 'processEdit',
                     'serviceLevel': '',
-                    'termDisplayOrder': '_254_1',
-                    'amc.groupbyterm': 'true',
-                    'selectAll_254_1': 'true',
-                    'amc.showterm._254_1': 'true',
-                    'termCourses__254_1': 'true',
-                    'amc.showcourse._51671_1': 'true',
-                    'amc.showcourseid._51671_1': 'true',
-                    'amc.showinstructors._51671_1': 'true',
-                    'amc.showcourse._51672_1': 'true',
-                    'amc.showcourseid._51672_1': 'true',
-                    'amc.showinstructors._51672_1': 'true',
-                    'amc.showcourse._51629_1': 'true',
-                    'amc.showcourseid._51629_1': 'true',
-                    'amc.showinstructors._51629_1': 'true',
-                    'amc.showcourse._51904_1': 'true',
-                    'amc.showcourseid._51904_1': 'true',
-                    'amc.showinstructors._51904_1': 'true',
-                    'amc.showcourse._51945_1': 'true',
-                    'amc.showcourseid._51945_1': 'true',
-                    'amc.showinstructors._51945_1': 'true',
                     'amc.url.name.1': '',
                     'amc.url.url.1': '',
                     'amc.url.name.2': '',
@@ -275,9 +257,17 @@ class BlackboardSession:
                     'amc.url.name.4': '',
                     'amc.url.url.4': '',
                     'amc.url.name.5': '',
-                    'amc.url.url.5': '',
-                    'bottom_Submit': 'Submit'
+                    'amc.url.url.5': ''
+
                 }
+
+                for course in course_ids:
+                    payload['amc.showcourse._' + course] = 'true'
+                    payload['amc.showcourseid._' + course] = 'true'
+                    payload['amc.showinstructors._' + course] = 'true'
+
+                payload['bottom_Submit'] = 'Submit'
+
                 enable_instructors_response = self._send_post_request(
                     url, data=payload, allow_redirects=False)
 
