@@ -12,7 +12,6 @@ def step_impl(context):
     context.password = os.getenv('TEST_PASSWORD')
     context.session = BlackboardSession(
         username=context.username, password=context.password)
-    print(context.username, context.password)
 
 
 @given('I have invalid username and password')
@@ -25,7 +24,6 @@ def step_impl(context):
 def step_impl(context):
     context.session.login()
     context.response = context.session.get_response()
-    print(context.response)
 
 
 @then('the response should be "Login successful."')
