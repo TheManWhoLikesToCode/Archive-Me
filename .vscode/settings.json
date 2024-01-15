@@ -1,16 +1,4 @@
 {
     "python.formatting.provider": "autopep8",
-    "python.analysis.typeCheckingMode": "off",
-    "python.testing.unittestArgs": [
-        "-v",
-        "-s",
-        "./backend",
-        "-p",
-        "*_test.py"
-    ],
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestArgs": [
-        "backend"
-    ]
+    "python.analysis.typeCheckingMode": "off"
 }
