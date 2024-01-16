@@ -2,20 +2,16 @@ import logging
 import os
 import threading
 import time
-import uuid
 
 from dotenv import load_dotenv
 from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
-import yaml
 
-from blackboard_scraper import BlackboardSession
-from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files
+from blackboard_session import BlackboardSession
+from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files, remove_file_safely, is_file_valid, authorize_drive, get_session_files_path
+from blackboard_session_manager import BlackboardSessionManager
 import config
-
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -29,18 +25,6 @@ logging.basicConfig(level=logging.INFO)
 
 # Import dot env variables
 load_dotenv()
-
-
-def is_file_valid(file_path):
-    normalized_path = os.path.normpath(file_path)
-    return os.path.isfile(normalized_path) and not os.path.islink(normalized_path)
-
-def remove_file_safely(file_path):
-    try:
-        if is_file_valid(file_path):
-            os.remove(file_path)
-    except OSError as error:
-        app.logger.error(f"Error removing file: {error}")
 
 
 @scheduler.task('interval', id='clean_up', seconds=600)
@@ -58,92 +42,17 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
         app.logger.error(f"Error during post-download operations: {e}")
 
 
-def authorize_drive():
-    current_directory = os.getcwd()
-
-    if 'backend' in current_directory:
-        settings_path = 'settings.yaml'
-    elif 'Archive-Me' in current_directory:
-        settings_path = 'backend/settings.yaml'
-    else:
-        raise Exception("Unable to locate settings file.")
-
-    with open(settings_path, 'r') as file:
-        settings = yaml.safe_load(file)
-
-    settings['client_config']['client_id'] = os.environ.get('GOOGLE_CLIENT_ID')
-    settings['client_config']['client_secret'] = os.environ.get(
-        'GOOGLE_CLIENT_SECRET')
-
-    gauth = GoogleAuth(settings=settings)
-
-    if os.path.isfile("credentials.json"):
-        gauth.LoadCredentialsFile("credentials.json")
-    else:
-        gauth.LocalWebserverAuth()
-        gauth.SaveCredentialsFile("credentials.json")
-
-    if gauth.access_token_expired:
-        gauth.Refresh()
-        gauth.SaveCredentialsFile("credentials.json")
-
-    drive = GoogleDrive(gauth)
-    return drive
-
-
-bb_sessions = {}
-
-
-def get_bb_session(username):
-    if 'bb_sessions' not in bb_sessions:
-        bb_sessions['bb_sessions'] = {}
-
-    if username not in bb_sessions['bb_sessions']:
-        session_id = str(uuid.uuid4())  # Generate a unique session ID
-        bb_sessions['bb_sessions'][username] = session_id
-        # Store the session object
-        bb_sessions[session_id] = BlackboardSession()
-
-    return bb_sessions[bb_sessions['bb_sessions'][username]]
-
-
-def put_bb_session(username, bb_session):
-    session_id = bb_sessions['bb_sessions'].get(username)
-    if session_id:
-        bb_sessions[session_id] = bb_session
-
-
-def retrieve_bb_session(username):
-    if 'bb_sessions' not in bb_sessions:
-        bb_sessions['bb_sessions'] = {}
-
-    session_id = bb_sessions['bb_sessions'].get(username)
-    if session_id:
-        return bb_sessions.get(session_id)
-
-    return None
-
-
-def delete_bb_session(username):
-    session_id = bb_sessions['bb_sessions'].get(username)
-    if session_id:
-        session_to_delete = bb_sessions.pop(session_id, None)
-        if session_to_delete:
-            del bb_sessions['bb_sessions'][username]
+bb_session_manager = BlackboardSessionManager()
 
 
 @scheduler.task('interval', id='delete_sessions', seconds=60)
 def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
     current_time = time.time()
 
-    # Check if 'bb_sessions' key exists
-    if 'bb_sessions' not in bb_sessions:
-        return  # No sessions exist yet
-
     # Collect usernames with inactive sessions for deletion
     usernames_to_delete = []
-    for username, session_id in bb_sessions['bb_sessions'].items():
-        session = bb_sessions.get(session_id)
+    for username, session_id in bb_session_manager.user_session_map.items():
+        session = bb_session_manager.bb_sessions.get(session_id)
         if session:
             last_activity_time = session.last_activity_time
             inactive_duration = current_time - last_activity_time
@@ -152,12 +61,9 @@ def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
 
     # Delete collected usernames' sessions
     for username in usernames_to_delete:
-        delete_bb_session(username)
+        bb_session_manager.delete_bb_session(username)
 
     print("Deleting inactive sessions at:", time.time())
-
-    session_id = bb_sessions['bb_sessions'].get(username)
-    return bb_sessions.get(session_id)
 
 
 @app.route('/')
@@ -178,14 +84,14 @@ def login():
 
     try:
         # Retrieve or create a session for the user
-        bb_session = get_bb_session(username)
+        bb_session = bb_session_manager.get_bb_session(username)
         bb_session.username = username
         bb_session.password = password
 
         bb_session.login()
         response = bb_session.get_response()
         if response == 'Login successful.':
-            put_bb_session(username, bb_session)
+            bb_session_manager.put_bb_session(username, bb_session)
             return jsonify({'message': 'Logged in successfully'})
         else:
             return jsonify({'error': response}), 401
@@ -200,7 +106,7 @@ def scrape():
         return jsonify({'error': 'Username is required'}), 400
 
     try:
-        bb_session = retrieve_bb_session(username)
+        bb_session = bb_session_manager.retrieve_bb_session(username)
 
         if not bb_session:
             return jsonify({'error': 'Session not found'}), 400
@@ -283,14 +189,6 @@ def handle_single_file(file_id, file_name):
         return response
 
     return send_from_directory(session_files_path, file_name, as_attachment=True)
-
-
-def get_session_files_path():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    if os.path.basename(current_dir) != 'backend':
-        return os.path.join(current_dir, 'backend', 'Session Files')
-    else:
-        return os.path.join(current_dir, 'Session Files')
 
 
 @app.route('/browse')

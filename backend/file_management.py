@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 from flask import app
+import yaml
 from pdf_compressor import compress
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
@@ -229,3 +230,53 @@ def list_files_in_drive_folder(drive, folder_id, team_drive_id):
     except Exception as e:
         logging.error(f"Error in list_files_in_drive_folder: {e}")
         return []
+
+def is_file_valid(file_path):
+    normalized_path = os.path.normpath(file_path)
+    return os.path.isfile(normalized_path) and not os.path.islink(normalized_path)
+
+def remove_file_safely(file_path):
+    try:
+        if is_file_valid(file_path):
+            os.remove(file_path)
+    except OSError as error:
+        app.logger.error(f"Error removing file: {error}")
+
+def authorize_drive():
+    current_directory = os.getcwd()
+
+    if 'backend' in current_directory:
+        settings_path = 'settings.yaml'
+    elif 'Archive-Me' in current_directory:
+        settings_path = 'backend/settings.yaml'
+    else:
+        raise Exception("Unable to locate settings file.")
+
+    with open(settings_path, 'r') as file:
+        settings = yaml.safe_load(file)
+
+    settings['client_config']['client_id'] = os.environ.get('GOOGLE_CLIENT_ID')
+    settings['client_config']['client_secret'] = os.environ.get(
+        'GOOGLE_CLIENT_SECRET')
+
+    gauth = GoogleAuth(settings=settings)
+
+    if os.path.isfile("credentials.json"):
+        gauth.LoadCredentialsFile("credentials.json")
+    else:
+        gauth.LocalWebserverAuth()
+        gauth.SaveCredentialsFile("credentials.json")
+
+    if gauth.access_token_expired:
+        gauth.Refresh()
+        gauth.SaveCredentialsFile("credentials.json")
+
+    drive = GoogleDrive(gauth)
+    return drive
+
+def get_session_files_path():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(current_dir) != 'backend':
+        return os.path.join(current_dir, 'backend', 'Session Files')
+    else:
+        return os.path.join(current_dir, 'Session Files')
