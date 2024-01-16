@@ -238,22 +238,30 @@ const app = (() => {
       if (contentType && contentType.includes('application/json')) {
         const { folders, files } = await response.json();
         $('#directoryList').empty();
-  
-        // Update the global directory name
         currentDirectoryName = directoryName;
         $('#path').text(currentDirectoryName);
-        console.log({ folders, files });
-  
-        [...folders, ...files].forEach(item => {
+
+        folders.forEach(folder => {
           const li = $('<li>');
           const link = $('<a>')
             .attr('href', '#')
-            .text(item[0]) // Display the item name
+            .html(`<i class="fa fa-folder"></i> ${folder[0]}`)
             .click(async (event) => {
               event.preventDefault();
-              // Pass both the ID and the name of the item
-              console.log(item[2], item[0]);
-              await updateDirectoryList(item[2], item[0]);
+              await updateDirectoryList(folder[2], folder[0]);
+            });
+          li.append(link);
+          $('#directoryList').append(li);
+        });
+
+        files.forEach(file => {
+          const li = $('<li>');
+          const link = $('<a>')
+            .attr('href', '#')
+            .html(`<i class="fa fa-file"></i> ${file[0]}`)
+            .click(async (event) => {
+              event.preventDefault();
+              await updateDirectoryList(file[2], file[0]);
             });
           li.append(link);
           $('#directoryList').append(li);
@@ -267,7 +275,7 @@ const app = (() => {
       console.error("Error updating directory list:", error);
       alert('Error updating directory list: ' + error.message);
     }
-  };  
+  };
 
   const onDirectoryChange = (newPath) => {
     currentPath = newPath;
