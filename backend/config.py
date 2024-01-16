@@ -9,7 +9,7 @@ env = os.environ.get('ENVIRONMENT')
 
 if env == 'dev':
     PORT = 5003
-    DEBUG = True
+    DEBUG = False
 elif env == 'prod':
     PORT = 5001
     DEBUG = False

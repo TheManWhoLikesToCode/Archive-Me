@@ -381,28 +381,22 @@ class BlackboardSession:
 
     def download_and_save_file(self):
         """
-
-        Downloads and saves the taks passed from the get dwonload tasks function.
+        Downloads and saves the tasks passed from the get download tasks function.
 
         self modifies:
         zipFound -- A boolean value indicating if the zip file was found.
         last_activity_time -- The time of the last activity.
         response -- The response of the download and save file attempt.
-
         """
 
-        if self.is_logged_in == False:
+        if not self.is_logged_in:
             self.response = "Not logged in."
             return
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        if os.path.basename(current_dir) != 'backend':
-            session_files_path = os.path.join(
-                current_dir, 'backend', 'Session Files')
-        else:
-            session_files_path = os.path.join(current_dir, 'Session Files')
+        session_files_path = os.path.join(current_dir, 'backend', 'Session Files') if os.path.basename(current_dir) != 'backend' else os.path.join(current_dir, 'Session Files')
 
-        zip_file_name = self.username + '_downloaded_content.zip'
+        zip_file_name = f'{self.username}_downloaded_content.zip'
         zip_file_path = os.path.join(current_dir, zip_file_name)
 
         download_tasks = getattr(self, 'download_tasks', [])
@@ -421,17 +415,17 @@ class BlackboardSession:
             name, current_extension = os.path.splitext(assignment_name)
 
             if current_extension:
-                mime_of_current_extension = mimetypes.guess_type(assignment_name)[
-                    0]
-                if mime_of_current_extension == content_type:
-                    extension = current_extension
-                else:
-                    extension = guessed_extension or current_extension
+                mime_of_current_extension = mimetypes.guess_type(assignment_name)[0]
+                extension = current_extension if mime_of_current_extension == content_type else guessed_extension or current_extension
             else:
                 if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
                     return
-                else:
-                    extension = guessed_extension or '.bin'
+                extension = guessed_extension or '.bin'
+
+            # Skip download if file type is None
+            if extension is None:
+                print(f"Skipped downloading {assignment_name} as file type could not be determined.")
+                return
 
             file_path = os.path.join(base_directory, name + extension)
 
@@ -448,15 +442,14 @@ class BlackboardSession:
                 for file in files:
                     if file.endswith('.pdf') or file.endswith('.docx'):
                         file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(
-                            file_path, session_files_path)
+                        arcname = os.path.relpath(file_path, session_files_path)
                         zipf.write(file_path, arcname=arcname)
 
-        # Return the relative path of the zip file
         self.zipFound = True
         self.last_activity_time = time.time()
 
         return os.path.relpath(zip_file_path, os.getcwd())
+
 
     def get_download_tasks(self):
         """

@@ -9,7 +9,7 @@ from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
 
 from blackboard_session import BlackboardSession
-from file_management import clean_up_session_files, delete_session_files, list_files_in_drive_folder, update_drive_directory, clean_up_docs_files, remove_file_safely, is_file_valid, authorize_drive, get_session_files_path
+from file_management import clean_up_session_files, delete_session_files, view_in_drive_folder, update_drive_directory, clean_up_docs_files, remove_file_safely, is_file_valid, authorize_drive, get_session_files_path, file_name_from_path
 from blackboard_session_manager import BlackboardSessionManager
 import config
 
@@ -157,19 +157,14 @@ def list_directory(path):
 
     if path is None:
         path = team_drive_id
-    items = list_files_in_drive_folder(drive, path, team_drive_id)
+    folders, files = view_in_drive_folder(drive, path, team_drive_id)
 
-    if len(items) == 1:
-        item = items[0]
-        item_type, file_name, file_id = item[1], item[0], item[2]
+    items = folders + files
+    if not items:
+        file_name = file_name_from_path(drive, path)
+        return handle_single_file(path, file_name)
 
-        if item_type == 'FILE':
-            return handle_single_file(file_id, file_name)
-        elif item_type == 'FOLDER':
-            return jsonify({'error': 'Cannot download a folder.'}), 400
-
-    return jsonify(items)
-
+    return jsonify({'folders': folders, 'files': files})
 
 def handle_single_file(file_id, file_name):
     session_files_path = get_session_files_path()
@@ -189,7 +184,6 @@ def handle_single_file(file_id, file_name):
         return response
 
     return send_from_directory(session_files_path, file_name, as_attachment=True)
-
 
 @app.route('/browse')
 def list_root_directory():

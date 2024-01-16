@@ -1,3 +1,4 @@
+from googleapiclient.errors import HttpError
 import logging
 import os
 import shutil
@@ -29,10 +30,10 @@ def clean_up_session_files(compress_files):
     else:
         session_files_path = os.path.join(current_dir, 'Session Files')
         docs_path = os.path.join(current_dir, 'docs')
-    
+
     if not os.path.exists(session_files_path):
         return
-    
+
     if compress_files:
         # Compress PDFs within the session files path
         compress_pdfs(session_files_path)
@@ -94,7 +95,7 @@ def clean_up_docs_files():
         docs_file_path = os.path.join(current_dir, 'backend', 'docs')
     else:
         docs_file_path = os.path.join(current_dir, 'docs')
-    
+
     # Check if the docs_file_path exists
     if not os.path.exists(docs_file_path):
         return
@@ -151,7 +152,7 @@ def find_folder_id(drive, folder_name, team_drive_id):
     return file_list[0]['id'] if file_list else None
 
 
-def list_files_in_drive_folder(drive, team_drive_id):
+def view_in_drive_folder(drive, team_drive_id):
     query = f"'{team_drive_id}' in parents and trashed=false"
     file_list = drive.ListFile(
         {'q': query, 'supportsTeamDrives': True, 'includeTeamDriveItems': True}).GetList()
@@ -170,11 +171,14 @@ def upload_folder(drive, local_folder_path, team_drive_id):
             upload_file_to_folder(drive, new_folder_id,
                                   filepath, team_drive_id)
 
+def file_name_from_path(drive, drive_id):
+    file = drive.CreateFile({'id': drive_id})
+    return file['title']
 
 def update_drive_directory(drive, team_drive_id):
 
     current_dir = os.getcwd()
-   
+
    # Check if the current directory ends with 'backend'. If not, append 'backend' to the path
     if os.path.basename(current_dir) != 'backend':
         docs_file_path = os.path.join(current_dir, 'backend', 'docs')
@@ -193,7 +197,7 @@ def update_drive_directory(drive, team_drive_id):
 
             if drive_folder_id:
                 # Modified to get only the names of the files in the Drive folder
-                drive_files = [file_info[0] for file_info in list_files_in_drive_folder(
+                drive_files = [file_info[0] for file_info in view_in_drive_folder(
                     drive, drive_folder_id, team_drive_id)]
 
                 for local_file in os.listdir(local_folder_path):
@@ -209,31 +213,38 @@ def update_drive_directory(drive, team_drive_id):
                 upload_folder(drive, local_folder_path, team_drive_id)
 
 
-def list_files_in_drive_folder(drive, folder_id, team_drive_id):
+def view_in_drive_folder(drive, folder_id, team_drive_id):
     try:
         query = f"'{folder_id}' in parents and trashed=false"
-        
+        params = {'q': query}
+
         if team_drive_id:
-            file_list = drive.ListFile({'q': query, 'supportsTeamDrives': True, 'includeTeamDriveItems': True,
-                                        'corpora': 'teamDrive', 'teamDriveId': team_drive_id}).GetList()
-        else:
-            file_list = drive.ListFile({'q': query}).GetList()
-        
-        if not file_list:
-            file = drive.CreateFile({'id': folder_id})
-            file.FetchMetadata()
-            return [(file['title'], file['mimeType'], file['id'], 'FILE')]
-        
-        sorted_file_list = sorted(file_list, key=lambda file: file['title'])
-        return [(file['title'], file['mimeType'], file['id']) for file in sorted_file_list]
-    
+            params.update({'supportsTeamDrives': True, 'includeTeamDriveItems': True,
+                           'corpora': 'teamDrive', 'teamDriveId': team_drive_id})
+
+        directory = drive.ListFile(params).GetList()
+
+        folders, files = [], []
+
+        for instance in directory:
+            item = [instance['title'], instance['mimeType'], instance['id']]
+            (folders if instance['mimeType'] ==
+             'application/vnd.google-apps.folder' else files).append(item)
+
+        return sorted(folders, key=lambda x: x[0]), sorted(files, key=lambda x: x[0])
+
+    except HttpError as http_error:
+        logging.error(f"HTTP error in view_in_drive_folder: {http_error}")
+        raise
     except Exception as e:
-        logging.error(f"Error in list_files_in_drive_folder: {e}")
-        return []
+        logging.error(f"Unexpected error in view_in_drive_folder: {e}")
+        raise
+
 
 def is_file_valid(file_path):
     normalized_path = os.path.normpath(file_path)
     return os.path.isfile(normalized_path) and not os.path.islink(normalized_path)
+
 
 def remove_file_safely(file_path):
     try:
@@ -241,6 +252,7 @@ def remove_file_safely(file_path):
             os.remove(file_path)
     except OSError as error:
         app.logger.error(f"Error removing file: {error}")
+
 
 def authorize_drive():
     current_directory = os.getcwd()
@@ -273,6 +285,7 @@ def authorize_drive():
 
     drive = GoogleDrive(gauth)
     return drive
+
 
 def get_session_files_path():
     current_dir = os.path.dirname(os.path.abspath(__file__))

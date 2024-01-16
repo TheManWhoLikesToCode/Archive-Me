@@ -236,21 +236,23 @@ const app = (() => {
       const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`);
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
+        const { folders, files } = await response.json();
         $('#directoryList').empty();
-
+  
         // Update the global directory name
         currentDirectoryName = directoryName;
         $('#path').text(currentDirectoryName);
-        console.log(data);
-        data.forEach(item => {
+        console.log({ folders, files });
+  
+        [...folders, ...files].forEach(item => {
           const li = $('<li>');
           const link = $('<a>')
-            .attr('href', `#`)
-            .text(item[0]) // Display the course name
+            .attr('href', '#')
+            .text(item[0]) // Display the item name
             .click(async (event) => {
               event.preventDefault();
-              // Pass both the ID and the name of the directory
+              // Pass both the ID and the name of the item
+              console.log(item[2], item[0]);
               await updateDirectoryList(item[2], item[0]);
             });
           li.append(link);
@@ -265,7 +267,7 @@ const app = (() => {
       console.error("Error updating directory list:", error);
       alert('Error updating directory list: ' + error.message);
     }
-  };
+  };  
 
   const onDirectoryChange = (newPath) => {
     currentPath = newPath;
