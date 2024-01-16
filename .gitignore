@@ -8,3 +8,6 @@ frontend/.env
 backend/support/.DS_Store
 credentials.json
 backend/credentials.json
+.DS_Store
+frontend/.DS_Store
+backend/support/.DS_Store

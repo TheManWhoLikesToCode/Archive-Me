@@ -85,7 +85,7 @@ $(function () {
 const app = (() => {
   let fileKeyGlobal = null;
   let currentPath = '';
-  
+
   const apiUrl = getApiUrl();
 
   const showLoadingScreen = () => {
@@ -104,10 +104,12 @@ const app = (() => {
 
   const updateDownloadButtonVisibility = () => {
     const downloadButton = document.getElementById("downloadButton");
-    if (fileKeyGlobal) {
-      downloadButton.style.display = "block"; // Show button if file_key is present
-    } else {
-      downloadButton.style.display = "none"; // Hide button otherwise
+    if (downloadButton) {
+      if (fileKeyGlobal) {
+        downloadButton.style.display = "block"; // Show button if file_key is present
+      } else {
+        downloadButton.style.display = "none"; // Hide button otherwise
+      }
     }
   };
 
@@ -290,13 +292,12 @@ const app = (() => {
     if (downloadButton) {
       downloadButton.addEventListener("click", downloadFile);
     }
-    if (document.getElementById('directoryList')) {
+    if (window.location.pathname === '/directory/') {
       updateDirectoryList('');
     }
 
     hideLoadingScreen();
     updateDownloadButtonVisibility();
-    updateDirectoryList('');
   };
 
   return { init };
