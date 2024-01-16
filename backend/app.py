@@ -255,7 +255,7 @@ def list_directory(path):
 
     if len(items) == 1:
         item = items[0]
-        item_type, file_name, file_id = item[3], item[0], item[2]
+        item_type, file_name, file_id = item[1], item[0], item[2]
 
         if item_type == 'FILE':
             return handle_single_file(file_id, file_name)
