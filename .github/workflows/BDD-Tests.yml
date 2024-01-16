@@ -26,6 +26,9 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run Behave tests
+        env:
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: |
           cd backend
           behave
