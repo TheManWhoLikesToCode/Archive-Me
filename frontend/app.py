@@ -1,6 +1,5 @@
 from flask import Flask, render_template
 from flask_cors import CORS, cross_origin
-import os
 import logging
 import config
 

@@ -253,39 +253,44 @@ def list_directory(path):
         path = team_drive_id
     items = list_files_in_drive_folder(drive, path, team_drive_id)
 
-    # Check if there's only one file returned
-    if len(items) == 1 and items[0][3] == 'FILE':
-        # Assuming 'file_id' and 'file_name' are available based on the user selection
-        file_id = items[0][2]
-        file_name = items[0][0]
+    if len(items) == 1:
+        item = items[0]
+        item_type, file_name, file_id = item[3], item[0], item[2]
 
-        # Update the session_files_path based on the current directory and create if it doesn't exist
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        if os.path.basename(current_dir) != 'backend':
-            session_files_path = os.path.join(
-                current_dir, 'backend', 'Session Files')
-        else:
-            session_files_path = os.path.join(current_dir, 'Session Files')
-
-        # Check if the Session Files directory exists, if not, create it
-        if not os.path.exists(session_files_path):
-            os.makedirs(session_files_path)
-        full_path = os.path.join(session_files_path, file_name)
-
-        file = drive.CreateFile({'id': file_id})
-        print('Downloading file %s from Google Drive' % file_name)
-        file.GetContentFile(full_path)
-
-        @after_this_request
-        def trigger_post_download_operations(response):
-            thread = threading.Thread(
-                target=clean_up_and_upload_files_to_google_drive, args=(full_path,))
-            thread.start()
-            return response
-
-        return send_from_directory(session_files_path, file_name, as_attachment=True)
+        if item_type == 'FILE':
+            return handle_single_file(file_id, file_name)
+        elif item_type == 'FOLDER':
+            return jsonify({'error': 'Cannot download a folder.'}), 400
 
     return jsonify(items)
+
+
+def handle_single_file(file_id, file_name):
+    session_files_path = get_session_files_path()
+    if not os.path.exists(session_files_path):
+        os.makedirs(session_files_path)
+    full_path = os.path.join(session_files_path, file_name)
+
+    file = drive.CreateFile({'id': file_id})
+    print('Downloading file %s from Google Drive' % file_name)
+    file.GetContentFile(full_path)
+
+    @after_this_request
+    def trigger_post_download_operations(response):
+        thread = threading.Thread(
+            target=clean_up_and_upload_files_to_google_drive, args=(full_path,))
+        thread.start()
+        return response
+
+    return send_from_directory(session_files_path, file_name, as_attachment=True)
+
+
+def get_session_files_path():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(current_dir) != 'backend':
+        return os.path.join(current_dir, 'backend', 'Session Files')
+    else:
+        return os.path.join(current_dir, 'Session Files')
 
 
 @app.route('/browse')

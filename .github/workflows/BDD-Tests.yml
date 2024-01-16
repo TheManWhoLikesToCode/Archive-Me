@@ -1,4 +1,4 @@
-name: Run Blackboard Session Tests
+name: Run Behave Tests
 
 on:
   push:
@@ -9,14 +9,14 @@ on:
       - main
 
 jobs:
-  test:
+  behave_test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9.x'
 
@@ -25,9 +25,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Run tests
+      - name: Run Behave tests
         env:
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: |
-          python backend/test_blackboard_scraper.py
+          cd backend
+          behave

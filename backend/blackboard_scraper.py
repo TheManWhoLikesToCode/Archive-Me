@@ -84,10 +84,10 @@ class BlackboardSession:
 
     def get_response(self):
         return self.response
-    
+
     def get_InstructorsFound(self):
         return self.instructorsFound
-    
+
     def set_InstructorsFound(self, instructorsFound):
         self.instructorsFound = instructorsFound
 
@@ -103,7 +103,7 @@ class BlackboardSession:
             logging.info("Session closed and deleted.")
         else:
             logging.warning("No active session to delete.")
-            
+
     def scrape(self):
 
         if self.is_logged_in == False:
@@ -138,7 +138,7 @@ class BlackboardSession:
 
         Logs into blackboard using the username and password provided using
         the requests library and saves the session cookies.
-        
+
         self modifies:
         is_logged_in -- A boolean value indicating if the user is logged in.
         last_activity_time -- The time of the last activity.
@@ -166,6 +166,7 @@ class BlackboardSession:
                 'j_password': self.password,
                 '_eventId_proceed': ''
             }
+
             login_send_response = self._send_post_request(
                 int_login_page_response.url, data=final_payload)
 
@@ -193,16 +194,15 @@ class BlackboardSession:
             logging.error(f"An error occurred during login: {e}")
 
     def enable_instructors(self):
-        
         """
-        
+
         Enables instructors to be shown
-        
+
         self modifies:
         instructorsFound -- A boolean value indicating if instructors were found.
         last_activity_time -- The time of the last activity.
         response -- The response of the enable instructors attempt.
-        
+
         """
 
         if self.is_logged_in == False:
@@ -217,8 +217,26 @@ class BlackboardSession:
                 if get_response.status_code != 200:
                     raise Exception("GET request failed.")
 
+                course_ids = []
+
                 # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
                 soup = BeautifulSoup(get_response.content, "html.parser")
+                course_table = soup.find_all(
+                    attrs={"id": re.compile(r'blockAttributes_table_jsListFULL_Student_\d+_\d+_body')})
+                if not course_table:
+                    raise Exception("Course table not found.")
+
+                course_rows = course_table[0].find_all('tr')
+                if not course_rows:
+                    raise Exception("Course rows not found.")
+
+                for row in course_rows:
+                    course_id_match = re.search(
+                        r'FULL_Student_\d+_\d+_row:_(\d+_\d+)', row.get('id', ''))
+                    if course_id_match:
+                        course_id = course_id_match.group(1)
+                        course_ids.append(course_id)
+
                 nonce_value = soup.select_one(
                     '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
 
@@ -230,26 +248,6 @@ class BlackboardSession:
                     'recallUrl': '/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1',
                     'cmd': 'processEdit',
                     'serviceLevel': '',
-                    'termDisplayOrder': '_254_1',
-                    'amc.groupbyterm': 'true',
-                    'selectAll_254_1': 'true',
-                    'amc.showterm._254_1': 'true',
-                    'termCourses__254_1': 'true',
-                    'amc.showcourse._51671_1': 'true',
-                    'amc.showcourseid._51671_1': 'true',
-                    'amc.showinstructors._51671_1': 'true',
-                    'amc.showcourse._51672_1': 'true',
-                    'amc.showcourseid._51672_1': 'true',
-                    'amc.showinstructors._51672_1': 'true',
-                    'amc.showcourse._51629_1': 'true',
-                    'amc.showcourseid._51629_1': 'true',
-                    'amc.showinstructors._51629_1': 'true',
-                    'amc.showcourse._51904_1': 'true',
-                    'amc.showcourseid._51904_1': 'true',
-                    'amc.showinstructors._51904_1': 'true',
-                    'amc.showcourse._51945_1': 'true',
-                    'amc.showcourseid._51945_1': 'true',
-                    'amc.showinstructors._51945_1': 'true',
                     'amc.url.name.1': '',
                     'amc.url.url.1': '',
                     'amc.url.name.2': '',
@@ -259,9 +257,17 @@ class BlackboardSession:
                     'amc.url.name.4': '',
                     'amc.url.url.4': '',
                     'amc.url.name.5': '',
-                    'amc.url.url.5': '',
-                    'bottom_Submit': 'Submit'
+                    'amc.url.url.5': ''
+
                 }
+
+                for course in course_ids:
+                    payload['amc.showcourse._' + course] = 'true'
+                    payload['amc.showcourseid._' + course] = 'true'
+                    payload['amc.showinstructors._' + course] = 'true'
+
+                payload['bottom_Submit'] = 'Submit'
+
                 enable_instructors_response = self._send_post_request(
                     url, data=payload, allow_redirects=False)
 
@@ -272,27 +278,25 @@ class BlackboardSession:
                     self.set_InstructorsFound(True)
                 else:
                     self.set_InstructorsFound(False)
-                    logging.error(
-                        f"POST request failed with status code: {enable_instructors_response.status_code}")
+                    raise Exception("POST request failed.")
 
                 self.last_activity_time = time.time()
 
             except Exception as e:
                 logging.error(
-                    f"GET request failed with status code: {get_response.status_code}")
+                    f"An error occurred enabling instructors: {e}")
                 return
 
         except Exception as e:
             logging.error(f"An error occurred enabling instructors: {e}")
 
     def get_courses(self):
-        
         """
 
         Gets the courses the user is taking and stores in a dictionary 
         contained in the courses attribute. The key is the course name and
         the value is the link to the course.
-        
+
         self modifies:
         courses -- A dictionary of courses the user is taking.
         courseFound -- A boolean value indicating if courses were found.
@@ -318,7 +322,7 @@ class BlackboardSession:
                 raise Exception("POST request failed.")
 
             # Parse the response using Beautiful Soup with lxml parser
-            soup = BeautifulSoup(get_courses_response.content, "html.parser")
+            soup = BeautifulSoup(get_courses_response.content, "lxml")
 
             # Check if the user is not enrolled in any courses
             no_courses_text = 'You are not currently enrolled in any courses.'
@@ -327,7 +331,7 @@ class BlackboardSession:
                 return
 
             try:
-                div_4_1 = soup.find("div", id="_4_1termCourses__254_1")
+                div_4_1 = soup.find("div", id=re.compile(r"^_4_1termCourses"))
                 courses_list = div_4_1.find_all("ul")[0].find_all("li")
             except Exception as e:
                 logging.error(f"Error finding course list: {e}")
@@ -367,6 +371,7 @@ class BlackboardSession:
                         continue
 
             self.courses = hrefs
+            self.courseFound = True
             self.last_activity_time = time.time()
 
         except Exception as e:
@@ -375,21 +380,20 @@ class BlackboardSession:
             logging.error(f"An error occurred while getting courses: {e}")
 
     def download_and_save_file(self):
-
-        if self.is_logged_in == False:
-            self.response = "Not logged in."
-            return
-
         """
 
         Downloads and saves the taks passed from the get dwonload tasks function.
-        
+
         self modifies:
         zipFound -- A boolean value indicating if the zip file was found.
         last_activity_time -- The time of the last activity.
         response -- The response of the download and save file attempt.
 
         """
+
+        if self.is_logged_in == False:
+            self.response = "Not logged in."
+            return
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         if os.path.basename(current_dir) != 'backend':
@@ -425,7 +429,7 @@ class BlackboardSession:
                     extension = guessed_extension or current_extension
             else:
                 if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
-                    extension = '.html'
+                    return
                 else:
                     extension = guessed_extension or '.bin'
 
@@ -455,12 +459,11 @@ class BlackboardSession:
         return os.path.relpath(zip_file_path, os.getcwd())
 
     def get_download_tasks(self):
-        
         """
 
         Gets a list of download tasks to be executed by collection all of the 
         "downlaodable" coneent from each course.
-        
+
         self modifies:
         download_tasks -- A list of download tasks to be executed.
         downloadTasksFound -- A boolean value indicating if download tasks were found.
@@ -472,7 +475,7 @@ class BlackboardSession:
         if self.is_logged_in == False:
             self.response = "Not logged in."
             return
-        
+
         download_tasks = []
 
         hrefs = self.courses
