@@ -6,3 +6,5 @@ frontend/.env
 *.pyc
 *.DS_Store
 backend/support/.DS_Store
+credentials.json
+backend/credentials.json

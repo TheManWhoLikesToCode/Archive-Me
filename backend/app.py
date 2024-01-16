@@ -32,8 +32,8 @@ load_dotenv()
 
 
 def is_file_valid(file_path):
-    return os.path.isfile(file_path) and not os.path.islink(file_path)
-
+    normalized_path = os.path.normpath(file_path)
+    return os.path.isfile(normalized_path) and not os.path.islink(normalized_path)
 
 def remove_file_safely(file_path):
     try:
