@@ -27,4 +27,5 @@ jobs:
 
       - name: Run Behave tests
         run: |
-          behave backend/features
+          cd backend
+          behave
