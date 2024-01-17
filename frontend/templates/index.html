@@ -81,6 +81,27 @@
     </div>
   </section>
 
+  <section class="py-7 bg-dark section-angle top-left bottom-left" id="pricing">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12 mx-auto text-center">
+          <h2 class="heading-black">Live Demo</h2>
+          <p class="text-muted lead">Experience our tool in action.</p>
+        </div>
+      </div>
+      <div class="row mt-5">
+        <div class="col-md-12">
+          <div style="position: relative; padding-bottom: calc(53.44444444444445% + 42px); height: 0;">
+            <video style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" autoplay loop muted>
+              <source src="/static/archive-demo.mp4" type="video/mp4">
+              <img src="/static/archive-demo.gif" alt="Archive Demo">
+            </video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- features section -->
   <section class="pt-6 pb-7" id="features">
     <div class="container">
@@ -90,9 +111,8 @@
             Archive Me offers everything you need.
           </h2>
           <p class="text-muted lead">
-            Archive Me is a comprehensive tool that provides all the features
-            you need to efficiently archive your courses at the end of the
-            term.
+            Archive Me serves as a comprehensive tool designed to democratize the Kettering student experience by
+            providing uniform access to course materials.
           </p>
         </div>
       </div>
@@ -107,9 +127,8 @@
               </div>
               <h5>Efficient Archiving</h5>
               <p class="text-muted">
-                Blackboard Scrapper enables Kettering University students to
-                efficiently archive course materials and grades from
-                Blackboard for easy management and long-term reference.
+                Offers Kettering University students a streamlined solution for archiving and sharing
+                Blackboard course materials, facilitating efficient management and long-term access among peers.
               </p>
             </div>
             <div class="col-md-6 box">
@@ -131,10 +150,10 @@
                   <span data-feather="star" width="35" height="35"></span>
                 </div>
               </div>
-              <h5>Grade Retrieval</h5>
+              <h5>Crowdsourced Course Work</h5>
               <p class="text-muted">
-                Retrieve grades for each assignment and generate a detailed
-                HTML report, making it easier to track academic progress.
+                Allows students to anonymously archive and share past course materials with their peers,
+                fostering a collaborative learning environment.
               </p>
             </div>
             <div class="col-md-6 box">
@@ -145,9 +164,8 @@
               </div>
               <h5>Secure and Reliable</h5>
               <p class="text-muted">
-                Built with security in mind, Blackboard Scrapper ensures safe
-                and reliable access to your educational data.
-              </p>
+                Designed with a strong focus on security, Archive Me ensures your privacy by automatically deleting your
+                session and all user data after 60 seconds of inactivity. </p>
             </div>
           </div>
         </div>
@@ -156,10 +174,10 @@
         <div class="col-md-6 mr-auto">
           <h2>Revolutionize Your Learning Experience</h2>
           <p class="mb-5">
-            ArchiveMe, exclusively designed for Kettering University students, provides an efficient and user-friendly
+            Archive Me, exclusively designed for Kettering University students, provides an efficient and user-friendly
             approach to managing and organizing course materials. This innovative tool automates the extraction of
             educational content from Blackboard, facilitating easy and continuous access to these vital resources. With
-            ArchiveMe, students can effortlessly retrieve and organize their course materials, ensuring they remain
+            Archive Me, students can effortlessly retrieve and organize their course materials, ensuring they remain
             available and accessible long after the term has ended, enhancing their learning experience and academic
             organization
           </p>
@@ -238,10 +256,10 @@
             <div class="col-md-6 mb-5">
               <h6>How do you handle login information?</h6>
               <p class="text-muted">
-                Your login information is encrypted on the front end. We only
-                pass a hashed password to our backend for security. This
-                hashed password is then used to facilitate secure access to
-                third-party services like Blackboard.
+                Your login information is passed directly to Kettering Authentication Services via a POST request, and
+                that session is stored using a session manager. If you stop using our services within 60 seconds, your
+                user information will be deleted. Don't believe us? Check it out for yourself; our project is completely
+                open-sourced. <a href="https://github.com/TheManWhoLikesToCode/Archive-Me">Visit GitHub</a>
               </p>
             </div>
             <div class="col-md-6 mb-5">
@@ -255,9 +273,9 @@
             <div class="col-md-6 mb-5">
               <h6>What about data privacy and security?</h6>
               <p class="text-muted">
-                We take data privacy and security very seriously. Our systems
-                are designed with robust security measures to protect your
-                information and ensure confidentiality.
+                As mentioned above, secruity and privacy is a key focus. With that being said there is not database,
+                cookies, or any other way to track you on this site. Your data is only stored in your session and is
+                deleted after 60 seconds of inactivity.
               </p>
             </div>
             <div class="col-md-6 mb-5">
@@ -312,7 +330,7 @@
           <h5>Legal</h5>
           <ul class="list-unstyled">
             <li><a href="#">Privacy</a></li>
-            <li><a href="#">Terms</a></li>
+            <li><a href="/TOS">Terms</a></li>
             <li><a href="#">Refund policy</a></li>
           </ul>
         </div>

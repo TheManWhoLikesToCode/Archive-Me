@@ -22,6 +22,11 @@ def index():
 def demo():
     return render_template('demo.html')
 
+@app.route('/TOS')
+@cross_origin()
+def TOS():
+    return render_template('TOS.html')
+
 @app.route('/directory/')
 @cross_origin()
 def directory():
