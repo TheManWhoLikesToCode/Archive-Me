@@ -80,7 +80,10 @@ def authorize_drive():
     if os.path.isfile("credentials.json"):
         gauth.LoadCredentialsFile("credentials.json")
     else:
-        gauth.CommandLineAuth()
+        url = gauth.GetAuthUrl()
+        logging.info("Please visit this URL and get the auth code: " + url)
+        code = input("Enter the auth code: ")
+        gauth.Auth(code)
         gauth.SaveCredentialsFile("credentials.json")
 
     if gauth.access_token_expired:
