@@ -5,7 +5,7 @@ import time
 import unittest
 
 from dotenv import load_dotenv
-from blackboard_scraper import BlackboardSession
+from blackboard_session import BlackboardSession
 from unittest.mock import patch
 from usernames import usernames
 

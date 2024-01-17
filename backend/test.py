@@ -1,73 +1,12 @@
 import logging
-from backend.blackboard_scraper_S import (
-    download_and_zip_content,
-    log_into_blackboard,
-    scrape_content_from_blackboard,
-    scrape_grades_from_blackboard,
-)
-from config import chrome_options
 from file_management import clean_up_session_files, delete_session_files, update_drive_directory
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from file_management import clean_up_session_files, delete_session_files, update_drive_directory, clean_up_docs_files, remove_file_safely, is_file_valid, authorize_drive, view_in_drive_folder
 
-
-class ScraperService:
-    def __init__(self):
-        self.drivers = {}
-        logging.info("ScraperService initialized")
-
-    def initialize_driver(self, username):
-        logging.info(f"Initializing driver for {username}")
-        if username not in self.drivers:
-            try:
-                service = Service(ChromeDriverManager().install())
-                driver = webdriver.Chrome(
-                    service=service, options=chrome_options)
-                self.drivers[username] = driver
-            except Exception as e:
-                logging.error(
-                    f"Error initializing WebDriver for {username}: {e}")
-                raise
-        return self.drivers[username]
-
-    def login(self, username, password):
-        logging.info(f"Logging in {username}")
-        try:
-            driver = self.initialize_driver(username)
-            return log_into_blackboard(driver, username, password)
-        except Exception as e:
-            logging.error(f"Error during login for {username}: {e}")
-            self.reset(username)
-            raise
-
-    def scrape(self, username):
-        logging.info(f"Scraping data for {username}")
-        driver = self.drivers.get(username)
-        if not driver:
-            raise Exception("User not logged in or session expired")
-
-        try:
-            return download_and_zip_content(driver, username)
-        except Exception as e:
-            logging.error(f"Error during scraping for {username}: {e}")
-            raise
-        finally:
-            self.reset(username)
-
-    def reset(self, username):
-        logging.info(f"Resetting driver for {username}")
-        driver = self.drivers.pop(username, None)
-        if driver:
-            try:
-                driver.quit()
-            except Exception as e:
-                logging.error(f"Error closing WebDriver for {username}: {e}")
-
-
-scraper_service = ScraperService()
 
 gauth = GoogleAuth()
 gauth.LocalWebserverAuth()
@@ -105,7 +44,7 @@ drive = GoogleDrive(gauth)
 # driver.quit()
 
 # * Update Drive
-update_drive_directory(drive, 'docs' ,team_drive_id)
+# update_drive_directory(drive, 'docs' ,team_drive_id)
 
 # scraper_service.login(username, password)
 
@@ -113,3 +52,10 @@ update_drive_directory(drive, 'docs' ,team_drive_id)
 
 # scraper_service.reset(username)
 
+
+
+
+team_drive_id = '0AFReXfsUal4rUk9PVA'
+
+directory = view_in_drive_folder(drive, team_drive_id, team_drive_id)
+print(directory)

@@ -85,7 +85,7 @@ $(function () {
 const app = (() => {
   let fileKeyGlobal = null;
   let currentPath = '';
-  
+
   const apiUrl = getApiUrl();
 
   const showLoadingScreen = () => {
@@ -104,10 +104,12 @@ const app = (() => {
 
   const updateDownloadButtonVisibility = () => {
     const downloadButton = document.getElementById("downloadButton");
-    if (fileKeyGlobal) {
-      downloadButton.style.display = "block"; // Show button if file_key is present
-    } else {
-      downloadButton.style.display = "none"; // Hide button otherwise
+    if (downloadButton) {
+      if (fileKeyGlobal) {
+        downloadButton.style.display = "block"; // Show button if file_key is present
+      } else {
+        downloadButton.style.display = "none"; // Hide button otherwise
+      }
     }
   };
 
@@ -234,22 +236,32 @@ const app = (() => {
       const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`);
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
+        const { folders, files } = await response.json();
         $('#directoryList').empty();
-
-        // Update the global directory name
         currentDirectoryName = directoryName;
         $('#path').text(currentDirectoryName);
-        console.log(data);
-        data.forEach(item => {
+
+        folders.forEach(folder => {
           const li = $('<li>');
           const link = $('<a>')
-            .attr('href', `#`)
-            .text(item[0]) // Display the course name
+            .attr('href', '#')
+            .html(`<i class="fa fa-folder"></i> ${folder[0]}`)
             .click(async (event) => {
               event.preventDefault();
-              // Pass both the ID and the name of the directory
-              await updateDirectoryList(item[2], item[0]);
+              await updateDirectoryList(folder[2], folder[0]);
+            });
+          li.append(link);
+          $('#directoryList').append(li);
+        });
+
+        files.forEach(file => {
+          const li = $('<li>');
+          const link = $('<a>')
+            .attr('href', '#')
+            .html(`<i class="fa fa-file"></i> ${file[0]}`)
+            .click(async (event) => {
+              event.preventDefault();
+              await updateDirectoryList(file[2], file[0]);
             });
           li.append(link);
           $('#directoryList').append(li);
@@ -290,13 +302,12 @@ const app = (() => {
     if (downloadButton) {
       downloadButton.addEventListener("click", downloadFile);
     }
-    if (document.getElementById('directoryList')) {
+    if (window.location.pathname === '/directory/') {
       updateDirectoryList('');
     }
 
     hideLoadingScreen();
     updateDownloadButtonVisibility();
-    updateDirectoryList('');
   };
 
   return { init };

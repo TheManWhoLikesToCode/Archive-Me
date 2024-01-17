@@ -1,5 +1,5 @@
 from behave import given, when, then
-from blackboard_scraper import BlackboardSession
+from blackboard_session import BlackboardSession
 import os
 from unittest.mock import patch
 from dotenv import load_dotenv
