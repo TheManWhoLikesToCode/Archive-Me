@@ -32,6 +32,9 @@ Intended for Kettering University students: This tool is specifically designed f
 
 Try Archive-Me out [here!](https://archive-me.net)
 
+## Stats
+
+![Lifetime Users!](https://github.com/TheManWhoLikesToCode/Archive-Me/blob/Analytics/cumulative_unique_visitors.png)
 
 ## Authors
 
