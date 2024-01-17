@@ -1,4 +1,4 @@
-name: Run Behave Tests
+name: Behave Tests
 
 on:
   push:
