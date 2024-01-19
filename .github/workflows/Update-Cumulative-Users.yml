@@ -26,3 +26,10 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           python analytics.py
+      - name: Save file
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add unique_visitors.csv cumulative_unique_visitors.png
+          git commit -m "Update unique visitors and cumulative visitors"
+          git push origin main
