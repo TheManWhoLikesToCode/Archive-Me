@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Login - Archive Me</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
+    <link rel="stylesheet" href="static/default.css" id="theme-color" />
+
+    <link rel="apple-touch-icon" sizes="180x180" href="static/logo/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="static/logo/archive-me_logo-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="static/logo/apple-touch-icon.png">
+    <link rel="manifest" href="../static/site.webmanifest">
+</head>
+
+<body>
+    <section class="smart-scroll">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-md navbar-dark">
+                <a class="navbar-brand heading-black" href="/">
+                    <i class="fa fa-arrow-left mr-2"></i>Archive Me
+                </a>
+                <button class="navbar-toggler navbar-toggler-right border-0" type="button" data-toggle="collapse"
+                    data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span data-feather="grid"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarCollapse">
+                </div>
+            </nav>
+        </div>
+    </section>
+
+    <section class="py-7 bg-hero" id="login"
+        style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-sm-8 col-12 mx-auto my-auto">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title text-center">Login to Archive Me</h3>
+                            <form id="loginForm">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="username" placeholder="Username"
+                                        required />
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" class="form-control" id="password" placeholder="Password"
+                                        required />
+                                </div>
+                                <div id="response-container" class="alert" style="display:none;"></div>
+                                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.7.3/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+    <script type="module" src="static/scripts.js"></script>
+</body>
+
+</html>

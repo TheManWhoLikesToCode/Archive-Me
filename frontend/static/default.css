@@ -2426,7 +2426,6 @@ select.form-control-lg:not([size]):not([multiple]),
   line-height: 1.5;
   border-radius: 0.3rem;
   transition: all 0.2s;
-  margin-bottom: 5rem; 
 }
 @media screen and (prefers-reduced-motion: reduce) {
   .btn {

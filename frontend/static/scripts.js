@@ -140,17 +140,18 @@ const app = (() => {
           username: username,
           password: password,
         }),
+        credentials: 'include',
       });
       const data = await response.json();
-      const message = data.message || 'Error occurred';
-      responseContainer.textContent = message;
 
-      // Store username in session storage if login is successful
       if (response.ok) {
         sessionStorage.setItem("user", JSON.stringify({ username: username }));
+        window.location.href = '/userpage';
+      } else {
+        const message = data.message || 'Error occurred';
+        responseContainer.textContent = message;
+        responseContainer.classList.add("alert-danger");
       }
-      responseContainer.textContent = message;
-      responseContainer.classList.add("alert-success");
     } catch (error) {
       responseContainer.textContent = error.message;
       responseContainer.classList.add("alert-danger");
@@ -159,6 +160,7 @@ const app = (() => {
       hideLoadingScreen();
     }
   };
+
 
   const archiveCourses = async () => {
     showLoadingScreen();
