@@ -8,7 +8,7 @@ from flask import Flask, abort, after_this_request, jsonify, request, send_from_
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
 
-from blackboard_session import BlackboardSession
+
 from file_management import clean_up_session_files, delete_session_files, view_in_drive_folder, update_drive_directory, clean_up_docs_files, remove_file_safely, is_file_valid, authorize_drive, get_session_files_path, file_name_from_path
 from blackboard_session_manager import BlackboardSessionManager
 import config
@@ -22,6 +22,8 @@ app.config.from_pyfile(config.__file__)
 
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
+log_level = logging.WARNING
+app.logger.setLevel(log_level)
 
 # Import dot env variables
 load_dotenv()
@@ -34,7 +36,7 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
         remove_file_safely(file_path)
 
     try:
-        clean_up_session_files(True)
+        clean_up_session_files(False)
         delete_session_files()
         update_drive_directory(drive, team_drive_id)
         clean_up_docs_files()
@@ -62,8 +64,6 @@ def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
     # Delete collected usernames' sessions
     for username in usernames_to_delete:
         bb_session_manager.delete_bb_session(username)
-
-    print("Deleting inactive sessions at:", time.time())
 
 
 @app.route('/')
@@ -153,7 +153,6 @@ def download(file_key):
 @app.route('/browse/<path:path>')
 @cross_origin()
 def list_directory(path):
-    print("Requested Path:", path)
 
     if path is None:
         path = team_drive_id
@@ -173,7 +172,6 @@ def handle_single_file(file_id, file_name):
     full_path = os.path.join(session_files_path, file_name)
 
     file = drive.CreateFile({'id': file_id})
-    print('Downloading file %s from Google Drive' % file_name)
     file.GetContentFile(full_path)
 
     @after_this_request
