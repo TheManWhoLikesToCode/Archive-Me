@@ -7,6 +7,10 @@ import matplotlib.dates as mdates
 from urllib3.util.retry import Retry
 from matplotlib import pyplot as plt
 from requests.adapters import HTTPAdapter
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
