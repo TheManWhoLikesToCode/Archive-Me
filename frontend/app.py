@@ -36,6 +36,10 @@ def TOS():
 def login():
     return render_template('login.html')
 
+@app.route('/logout')
+@cross_origin()
+def logout():
+    return render_template('logout.html')
 
 @app.route('/userpage')
 @cross_origin()

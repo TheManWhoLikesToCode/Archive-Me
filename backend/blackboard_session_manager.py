@@ -3,6 +3,7 @@ import threading
 import time
 from blackboard_session import BlackboardSession
 
+
 class BlackboardSessionManager:
     def __init__(self):
         self.bb_sessions = {}
@@ -15,7 +16,8 @@ class BlackboardSessionManager:
                 session_id = str(uuid.uuid4())  # Generate a unique session ID
                 self.user_session_map[username] = session_id
                 # Store the session object
-                self.bb_sessions[session_id] = BlackboardSession(session_id, time.time())
+                self.bb_sessions[session_id] = BlackboardSession(
+                    session_id, time.time())
 
             return self.bb_sessions[self.user_session_map[username]]
 
@@ -25,13 +27,22 @@ class BlackboardSessionManager:
             if session_id:
                 self.bb_sessions[session_id] = bb_session
 
-    def retrieve_bb_session(self, username):
+    def retrieve_bb_session_by_username(self, username):
         with self.lock:
             session_id = self.user_session_map.get(username)
             if session_id:
                 return self.bb_sessions.get(session_id)
-
         return None
+
+    def retrieve_bb_session_by_id(self, session_id):
+        with self.lock:
+            return self.bb_sessions.get(session_id)
+
+    def retrieve_bb_session(self, identifier):
+        if isinstance(identifier, str) and '-' in identifier:
+            return self.retrieve_bb_session_by_id(identifier)
+        else:
+            return self.retrieve_bb_session_by_username(identifier)
 
     def delete_bb_session(self, username):
         with self.lock:

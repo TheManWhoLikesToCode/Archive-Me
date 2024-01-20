@@ -161,6 +161,45 @@ const app = (() => {
     }
   };
 
+  const logoutUser = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/logout`, {
+        method: 'POST', // or 'POST' if your backend is expecting a POST request
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        sessionStorage.removeItem("user"); // Clear user session data
+        window.location.href = '/logout'; // Redirect to logout page
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const checkLoginStatus = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/is_logged_in`, {
+        method: 'GET',
+        credentials: 'include' // Necessary for including cookies
+      });
+
+      const data = await response.json();
+
+      if (!data.logged_in) {
+        console.log(data);
+        window.location.href = '/login'; // Redirect to login page
+      }
+      // Optionally, handle the case when the user is logged in
+      // e.g., display a welcome message, load user data, etc.
+    } catch (error) {
+      console.error('Error:', error);
+      window.location.href = '/login'; // Redirect to login page in case of error
+    }
+  };
+
 
   const archiveCourses = async () => {
     showLoadingScreen();
@@ -292,6 +331,15 @@ const app = (() => {
   });
 
   const init = () => {
+
+    const logoutLink = document.querySelector('a[href="/logout"]');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        logoutUser();
+      });
+    }
+
     const loginForm = document.querySelector("#loginForm");
     if (loginForm) {
       loginForm.addEventListener("submit", loginEventHandler);
@@ -307,12 +355,15 @@ const app = (() => {
     if (window.location.pathname === '/directory/') {
       updateDirectoryList('');
     }
+    if (window.location.pathname === '/userpage') {
+      checkLoginStatus();
+    }
 
     hideLoadingScreen();
     updateDownloadButtonVisibility();
   };
 
-  return { init };
+  return { init, logoutUser };
 })();
 
 document.addEventListener("DOMContentLoaded", app.init);

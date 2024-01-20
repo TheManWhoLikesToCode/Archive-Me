@@ -23,15 +23,17 @@ app.config.from_pyfile(config.__file__)
 
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
-#log_level = logging.WARNING
-#app.logger.setLevel(log_level)
+# log_level = logging.WARNING
+# app.logger.setLevel(log_level)
 
 # Import dot env variables
 load_dotenv()
 
+
 def is_user_logged_in():
     user_session = request.cookies.get('user_session')
     return user_session and bb_session_manager.retrieve_bb_session(user_session)
+
 
 @scheduler.task('interval', id='clean_up', seconds=600)
 def clean_up_and_upload_files_to_google_drive(file_path=None):
@@ -50,6 +52,7 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
 
 bb_session_manager = BlackboardSessionManager()
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -57,6 +60,7 @@ def login_required(f):
             return jsonify({'error': 'Unauthorized access'}), 401
         return f(*args, **kwargs)
     return decorated_function
+
 
 @app.route('/')
 @cross_origin()
@@ -93,6 +97,32 @@ def login():
             return jsonify({'error': response}), 401
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/logout', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def logout():
+    user_session = request.cookies.get('user_session')
+    if user_session:
+        # Remove the session from BlackboardSessionManager
+        bb_session_manager.delete_bb_session(user_session)
+
+        # Clear the user's session cookie
+        resp = make_response(jsonify({'message': 'Logged out successfully'}))
+        resp.set_cookie('user_session', '', expires=0)
+        return resp
+    else:
+        return jsonify({'error': 'No active session'}), 400
+
+
+@app.route('/is_logged_in', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def is_logged_in():
+    user_session = request.cookies.get('user_session')
+    if user_session and bb_session_manager.retrieve_bb_session(user_session):
+        return jsonify({'logged_in': True}), 200
+    else:
+        return jsonify({'logged_in': False}), 401
 
 
 @app.route('/scrape', methods=['GET'])
