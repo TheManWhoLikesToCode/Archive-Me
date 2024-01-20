@@ -3,3 +3,4 @@ datetime
 matplotlib
 urllib3
 requests
+python-dotenv
