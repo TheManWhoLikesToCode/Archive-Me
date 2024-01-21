@@ -12,7 +12,7 @@ from urllib3.util.retry import Retry
 
 
 class BlackboardSession:
-    def __init__(self, username=None, password=None, max_threads=100):
+    def __init__(self, session_id=None, username=None, password=None, max_threads=100):
         """
         Creates a blackboard session instance.
 
@@ -29,6 +29,7 @@ class BlackboardSession:
         self.username = username
         self.password = password
         self.max_threads = max_threads
+        self.session_id = session_id
         self.courses = {}
         self.download_tasks = []
         self.is_logged_in = False

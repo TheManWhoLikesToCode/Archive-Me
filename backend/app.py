@@ -1,10 +1,11 @@
+from functools import wraps
 import logging
 import os
 import threading
 import time
 
 from dotenv import load_dotenv
-from flask import Flask, abort, after_this_request, jsonify, request, send_from_directory
+from flask import Flask, abort, after_this_request, jsonify, make_response, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_apscheduler import APScheduler
 
@@ -22,11 +23,16 @@ app.config.from_pyfile(config.__file__)
 
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
-log_level = logging.WARNING
-app.logger.setLevel(log_level)
+# log_level = logging.WARNING
+# app.logger.setLevel(log_level)
 
 # Import dot env variables
 load_dotenv()
+
+
+def is_user_logged_in():
+    user_session = request.cookies.get('user_session')
+    return user_session and bb_session_manager.retrieve_bb_session(user_session)
 
 
 @scheduler.task('interval', id='clean_up', seconds=600)
@@ -47,23 +53,13 @@ def clean_up_and_upload_files_to_google_drive(file_path=None):
 bb_session_manager = BlackboardSessionManager()
 
 
-@scheduler.task('interval', id='delete_sessions', seconds=60)
-def delete_inactive_bb_sessions(inactivity_threshold_seconds=180):
-    current_time = time.time()
-
-    # Collect usernames with inactive sessions for deletion
-    usernames_to_delete = []
-    for username, session_id in bb_session_manager.user_session_map.items():
-        session = bb_session_manager.bb_sessions.get(session_id)
-        if session:
-            last_activity_time = session.last_activity_time
-            inactive_duration = current_time - last_activity_time
-            if inactive_duration > inactivity_threshold_seconds:
-                usernames_to_delete.append(username)
-
-    # Delete collected usernames' sessions
-    for username in usernames_to_delete:
-        bb_session_manager.delete_bb_session(username)
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not is_user_logged_in():
+            return jsonify({'error': 'Unauthorized access'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route('/')
@@ -73,7 +69,7 @@ def index():
 
 
 @app.route('/login', methods=['POST'])
-@cross_origin()
+@cross_origin(supports_credentials=True)
 def login():
     data = request.json
     username = data.get('username')
@@ -83,7 +79,6 @@ def login():
         return jsonify({'error': 'Missing username or password'}), 400
 
     try:
-        # Retrieve or create a session for the user
         bb_session = bb_session_manager.get_bb_session(username)
         bb_session.username = username
         bb_session.password = password
@@ -92,14 +87,47 @@ def login():
         response = bb_session.get_response()
         if response == 'Login successful.':
             bb_session_manager.put_bb_session(username, bb_session)
-            return jsonify({'message': 'Logged in successfully'})
+
+            resp = make_response(
+                jsonify({'message': 'Logged in successfully'}))
+            resp.set_cookie('user_session', bb_session.session_id,
+                            max_age=3600, secure=True, httponly=True)
+            return resp
         else:
             return jsonify({'error': response}), 401
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/logout', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def logout():
+    user_session = request.cookies.get('user_session')
+    if user_session:
+        # Remove the session from BlackboardSessionManager
+        bb_session_manager.delete_bb_session(user_session)
+
+        # Clear the user's session cookie
+        resp = make_response(jsonify({'message': 'Logged out successfully'}))
+        resp.set_cookie('user_session', '', expires=0)
+        return resp
+    else:
+        return jsonify({'error': 'No active session'}), 400
+
+
+@app.route('/is_logged_in', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def is_logged_in():
+    user_session = request.cookies.get('user_session')
+    if user_session and bb_session_manager.retrieve_bb_session(user_session):
+        return jsonify({'logged_in': True}), 200
+    else:
+        return jsonify({'logged_in': False}), 401
+
+
 @app.route('/scrape', methods=['GET'])
+@cross_origin(supports_credentials=True)
+@login_required
 def scrape():
     username = request.args.get('username')
     if not username:
@@ -126,7 +154,8 @@ def scrape():
 
 
 @app.route('/download/<file_key>', methods=['GET'])
-@cross_origin()
+@cross_origin(supports_credentials=True)
+@login_required
 def download(file_key):
     """
     Download a file by its file key and then delete it from the server.
@@ -151,7 +180,8 @@ def download(file_key):
 
 @app.route('/browse/', defaults={'path': None})
 @app.route('/browse/<path:path>')
-@cross_origin()
+@cross_origin(supports_credentials=True)
+@login_required
 def list_directory(path):
 
     if path is None:
@@ -164,6 +194,7 @@ def list_directory(path):
         return handle_single_file(path, file_name)
 
     return jsonify({'folders': folders, 'files': files})
+
 
 def handle_single_file(file_id, file_name):
     session_files_path = get_session_files_path()
@@ -183,7 +214,9 @@ def handle_single_file(file_id, file_name):
 
     return send_from_directory(session_files_path, file_name, as_attachment=True)
 
+
 @app.route('/browse')
+@login_required
 def list_root_directory():
     return list_directory(None)
 

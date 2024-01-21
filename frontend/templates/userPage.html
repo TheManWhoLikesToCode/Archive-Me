@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>User Dashboard - Archive Me</title>
+    <meta name="description" content="User Dashboard for Archive Me application" />
+
+    <!-- Reusing existing styles and libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
+    <link rel="stylesheet" href="static/default.css" id="theme-color" />
+    <link rel="apple-touch-icon" sizes="180x180" href="static/logo/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="static/logo/archive-me_logo-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="static/logo/apple-touch-icon.png">
+    <link rel="manifest" href="../static/site.webmanifest">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <section class="smart-scroll">
+        <div class="container-fluid">
+            <nav class="navbar navbar-expand-md navbar-dark">
+                <a class="navbar-brand heading-black" href="/">
+                    Archive Me
+                </a>
+                <button class="navbar-toggler navbar-toggler-right border-0" type="button" data-toggle="collapse"
+                    data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span data-feather="grid"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarCollapse">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a class="nav-link page-scroll" href="#demo">Demo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link page-scroll" href="#directory">Directory</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link page-scroll" href="/logout">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </section>
+
+<!-- Archive Section -->
+<!-- Archive Section -->
+<section class="py-7 py-md-0 bg-hero" id="archive">
+    <div class="container">
+        <div class="row vh-md-100 align-items-center">
+            <div class="col-md-8 col-sm-10 col-12 mx-auto">
+                <h1 class="heading-black text-capitalize text-center">
+                    Archive with Archive-Me
+                </h1>
+                <p class="lead py-3 text-center">
+                    Utilize Archive-Me to manage and organize your digital resources effectively.
+                </p>
+                <!-- Archive Box -->
+                <div class="archive-box bg-dark p-4 rounded shadow text-white">
+                    <h4 class="text-left">You are Logged In</h4>
+                    <p class="text-left">Access and manage your archived courses and resources with ease.</p>
+                    <div class="text-left">
+                        <button type="button" class="btn btn-primary" id="archiveButton">Archive Courses</button>
+                        <button type="button" class="btn btn-secondary" id="downloadButton">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+    <!-- Directory Section -->
+    <section class="py-7 bg-dark section-angle top-left bottom-left" id="directory">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 mx-auto">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="heading-black">
+                            Directory Listing
+                        </h2>
+                        <a class="btn btn-primary" href="#" id="back">Back</a>
+                    </div>
+                    <p class="text-muted lead">
+                        Browse through your directory of courses and resources.
+                    </p>
+                    <div class="mt-4">
+                        <h3>Directory Listing for <span id="path">/path/to/directory</span></h3>
+                        <!-- Placeholder for Directory Listing -->
+                        <ul id="directoryList" class="list-unstyled">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-6">
+        <!-- Existing Footer Content -->
+    </footer>
+
+    <!-- Reusing existing scripts -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.7.3/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+    <script type="module" src="static/scripts.js"></script>
+</body>
+
+</html>

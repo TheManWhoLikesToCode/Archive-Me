@@ -106,7 +106,7 @@ const app = (() => {
     const downloadButton = document.getElementById("downloadButton");
     if (downloadButton) {
       if (fileKeyGlobal) {
-        downloadButton.style.display = "block"; // Show button if file_key is present
+        downloadButton.style.display = "";
       } else {
         downloadButton.style.display = "none"; // Hide button otherwise
       }
@@ -140,17 +140,18 @@ const app = (() => {
           username: username,
           password: password,
         }),
+        credentials: 'include',
       });
       const data = await response.json();
-      const message = data.message || 'Error occurred';
-      responseContainer.textContent = message;
 
-      // Store username in session storage if login is successful
       if (response.ok) {
         sessionStorage.setItem("user", JSON.stringify({ username: username }));
+        window.location.href = '/userpage';
+      } else {
+        const message = data.message || 'Error occurred';
+        responseContainer.textContent = message;
+        responseContainer.classList.add("alert-danger");
       }
-      responseContainer.textContent = message;
-      responseContainer.classList.add("alert-success");
     } catch (error) {
       responseContainer.textContent = error.message;
       responseContainer.classList.add("alert-danger");
@@ -159,6 +160,46 @@ const app = (() => {
       hideLoadingScreen();
     }
   };
+
+  const logoutUser = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        sessionStorage.removeItem("user");
+        window.location.href = '/logout';
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const checkLoginStatus = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/is_logged_in`, {
+        method: 'GET',
+        credentials: 'include' // Necessary for including cookies
+      });
+
+      const data = await response.json();
+
+      if (!data.logged_in) {
+        console.log(data);
+        window.location.href = '/login'; // Redirect to login page
+      }
+      // Optionally, handle the case when the user is logged in
+      // e.g., display a welcome message, load user data, etc.
+    } catch (error) {
+      console.error('Error:', error);
+      window.location.href = '/login'; // Redirect to login page in case of error
+    }
+  };
+
 
   const archiveCourses = async () => {
     showLoadingScreen();
@@ -179,7 +220,8 @@ const app = (() => {
 
       const response = await fetchWithErrorHandler(url, {
         method: "GET",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -205,10 +247,12 @@ const app = (() => {
     showLoadingScreen();
     try {
       console.log("Downloading file...");
-      console.log(fileKeyGlobal)
+      console.log(fileKeyGlobal);
       const baseUrl = window.location.origin;
       const downloadUrl = `${apiUrl}/download/${encodeURIComponent(fileKeyGlobal)}`;
-      const response = await fetchWithErrorHandler(downloadUrl);
+      const response = await fetchWithErrorHandler(downloadUrl, {
+        credentials: 'include'
+      });
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -233,7 +277,9 @@ const app = (() => {
 
   const updateDirectoryList = async (path, directoryName = '/') => {
     try {
-      const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`);
+      const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`, {
+        credentials: 'include'
+      });
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const { folders, files } = await response.json();
@@ -290,6 +336,14 @@ const app = (() => {
   });
 
   const init = () => {
+
+    const logoutLink = document.querySelector('a[href="/logout"]');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', (event) => {
+        logoutUser();
+      });
+    }
+
     const loginForm = document.querySelector("#loginForm");
     if (loginForm) {
       loginForm.addEventListener("submit", loginEventHandler);
@@ -302,15 +356,18 @@ const app = (() => {
     if (downloadButton) {
       downloadButton.addEventListener("click", downloadFile);
     }
-    if (window.location.pathname === '/directory/') {
+    if (window.location.pathname === '/userpage') {
       updateDirectoryList('');
+    }
+    if (window.location.pathname === '/userpage') {
+      checkLoginStatus();
     }
 
     hideLoadingScreen();
     updateDownloadButtonVisibility();
   };
 
-  return { init };
+  return { init, logoutUser };
 })();
 
 document.addEventListener("DOMContentLoaded", app.init);
