@@ -43,3 +43,17 @@ jobs:
           branch: "update-cumulative-users"
           delete-branch: true
           base: "main"
+
+  auto-merge:
+    needs: update-data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge
+        uses: pascalgn/automerge-action@v0.14.3
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          MERGE_LABELS: "automerge"
+          MERGE_METHOD: "squash"
+          MERGE_COMMIT_MESSAGE: "pull-request-title"
+          MERGE_RETRIES: "6"
+          MERGE_RETRY_SLEEP: "10000"
