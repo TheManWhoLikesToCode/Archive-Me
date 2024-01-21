@@ -19,12 +19,6 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/demo')
-@cross_origin()
-def demo():
-    return render_template('demo.html')
-
-
 @app.route('/TOS')
 @cross_origin()
 def TOS():
@@ -36,21 +30,17 @@ def TOS():
 def login():
     return render_template('login.html')
 
+
 @app.route('/logout')
 @cross_origin()
 def logout():
     return render_template('logout.html')
 
+
 @app.route('/userpage')
 @cross_origin()
 def userPage():
     return render_template('userPage.html')
-
-
-@app.route('/directory/')
-@cross_origin()
-def directory():
-    return render_template('directory.html')
 
 
 if __name__ == '__main__':

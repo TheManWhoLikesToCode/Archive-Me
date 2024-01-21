@@ -126,6 +126,7 @@ def is_logged_in():
 
 
 @app.route('/scrape', methods=['GET'])
+@cross_origin(supports_credentials=True)
 @login_required
 def scrape():
     username = request.args.get('username')
@@ -153,7 +154,7 @@ def scrape():
 
 
 @app.route('/download/<file_key>', methods=['GET'])
-@cross_origin()
+@cross_origin(supports_credentials=True)
 @login_required
 def download(file_key):
     """
@@ -179,7 +180,7 @@ def download(file_key):
 
 @app.route('/browse/', defaults={'path': None})
 @app.route('/browse/<path:path>')
-@cross_origin()
+@cross_origin(supports_credentials=True)
 @login_required
 def list_directory(path):
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -47,53 +48,50 @@
         </div>
     </section>
 
-    <!-- Demo Section -->
-    <section class="py-7 py-md-0 bg-hero" id="demo">
-        <div class="container">
-            <div class="row vh-md-100">
-                <div class="col-md-8 col-sm-10 col-12 mx-auto my-auto text-center">
-                    <h1 class="heading-black text-capitalize">
-                        Interactive Demo of Archive-Me
-                    </h1>
-                    <p class="lead py-3">
-                        Explore how Archive-Me works. This demo simulates the core functionalities of the application.
-                    </p>
-                    <!-- Interactive Demo Box -->
-                    <div>
-                        <h4>Login to Your Account</h4>
-                        <!-- Login Form -->
-                        <form style="margin-bottom: 20px" id="loginForm">
-                            <div class="form-group">
-                                <input type="text" class="form-control" id="username" placeholder="Username" required />
-                            </div>
-                            <div class="form-group">
-                                <input type="password" class="form-control" id="password" placeholder="Password" required />
-                            </div>
-                            <div id="response-container" class="alert" style="display:none;"></div>
-
-                            <button type="submit" class="btn btn-success">Login</button>
-                            <button type="button" class="btn btn-primary" id="archiveButton">Archive Courses</button>
-                            <button type="button" class="btn btn-secondary" id="downloadButton">Download</button>
-                        </form>
+<!-- Archive Section -->
+<!-- Archive Section -->
+<section class="py-7 py-md-0 bg-hero" id="archive">
+    <div class="container">
+        <div class="row vh-md-100 align-items-center">
+            <div class="col-md-8 col-sm-10 col-12 mx-auto">
+                <h1 class="heading-black text-capitalize text-center">
+                    Archive with Archive-Me
+                </h1>
+                <p class="lead py-3 text-center">
+                    Utilize Archive-Me to manage and organize your digital resources effectively.
+                </p>
+                <!-- Archive Box -->
+                <div class="archive-box bg-dark p-4 rounded shadow text-white">
+                    <h4 class="text-left">You are Logged In</h4>
+                    <p class="text-left">Access and manage your archived courses and resources with ease.</p>
+                    <div class="text-left">
+                        <button type="button" class="btn btn-primary" id="archiveButton">Archive Courses</button>
+                        <button type="button" class="btn btn-secondary" id="downloadButton">Download</button>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
+
 
     <!-- Directory Section -->
-    <section class="pt-6 pb-7" id="directory">
+    <section class="py-7 bg-dark section-angle top-left bottom-left" id="directory">
         <div class="container">
             <div class="row">
-                <div class="col-md-12 mx-auto text-center">
-                    <h2 class="heading-black">
-                        Directory Listing
-                    </h2>
+                <div class="col-md-12 mx-auto">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="heading-black">
+                            Directory Listing
+                        </h2>
+                        <a class="btn btn-primary" href="#" id="back">Back</a>
+                    </div>
                     <p class="text-muted lead">
                         Browse through your directory of courses and resources.
                     </p>
-                    <div class="container mt-4">
-                        <h1>Directory Listing for <span id="path">/path/to/directory</span></h1>
+                    <div class="mt-4">
+                        <h3>Directory Listing for <span id="path">/path/to/directory</span></h3>
                         <!-- Placeholder for Directory Listing -->
                         <ul id="directoryList" class="list-unstyled">
                         </ul>
@@ -116,4 +114,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
     <script type="module" src="static/scripts.js"></script>
 </body>
+
 </html>

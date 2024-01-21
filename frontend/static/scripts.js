@@ -106,7 +106,7 @@ const app = (() => {
     const downloadButton = document.getElementById("downloadButton");
     if (downloadButton) {
       if (fileKeyGlobal) {
-        downloadButton.style.display = "block"; // Show button if file_key is present
+        downloadButton.style.display = "";
       } else {
         downloadButton.style.display = "none"; // Hide button otherwise
       }
@@ -164,13 +164,13 @@ const app = (() => {
   const logoutUser = async () => {
     try {
       const response = await fetch(`${apiUrl}/logout`, {
-        method: 'POST', // or 'POST' if your backend is expecting a POST request
+        method: 'POST',
         credentials: 'include'
       });
 
       if (response.ok) {
-        sessionStorage.removeItem("user"); // Clear user session data
-        window.location.href = '/logout'; // Redirect to logout page
+        sessionStorage.removeItem("user");
+        window.location.href = '/logout';
       } else {
         console.error('Logout failed');
       }
@@ -220,7 +220,8 @@ const app = (() => {
 
       const response = await fetchWithErrorHandler(url, {
         method: "GET",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -246,10 +247,12 @@ const app = (() => {
     showLoadingScreen();
     try {
       console.log("Downloading file...");
-      console.log(fileKeyGlobal)
+      console.log(fileKeyGlobal);
       const baseUrl = window.location.origin;
       const downloadUrl = `${apiUrl}/download/${encodeURIComponent(fileKeyGlobal)}`;
-      const response = await fetchWithErrorHandler(downloadUrl);
+      const response = await fetchWithErrorHandler(downloadUrl, {
+        credentials: 'include'
+      });
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -274,7 +277,9 @@ const app = (() => {
 
   const updateDirectoryList = async (path, directoryName = '/') => {
     try {
-      const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`);
+      const response = await fetchWithErrorHandler(`${apiUrl}/browse/${path}`, {
+        credentials: 'include'
+      });
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const { folders, files } = await response.json();
@@ -335,7 +340,6 @@ const app = (() => {
     const logoutLink = document.querySelector('a[href="/logout"]');
     if (logoutLink) {
       logoutLink.addEventListener('click', (event) => {
-        event.preventDefault();
         logoutUser();
       });
     }
@@ -352,7 +356,7 @@ const app = (() => {
     if (downloadButton) {
       downloadButton.addEventListener("click", downloadFile);
     }
-    if (window.location.pathname === '/directory/') {
+    if (window.location.pathname === '/userpage') {
       updateDirectoryList('');
     }
     if (window.location.pathname === '/userpage') {
