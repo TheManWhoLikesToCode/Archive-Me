@@ -12,7 +12,7 @@ function getConfig() {
 function getEnv() {
     const hostname = window.location.hostname;
     if (hostname.includes('localhost')) return 'local';
-    if (hostname.includes('devapi')) return 'dev';
+    if (hostname.includes('dev')) return 'dev';
     return 'prod';
 }
 
