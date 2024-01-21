@@ -1,7 +1,7 @@
 function getConfig() {
     const config = {
         apiUrl: {
-            dev: "http://devapi.archive-me.net",
+            dev: "https://devapi.archive-me.net",
             prod: "https://api.archive-me.net",
             local: "http://localhost:5003"
         }
