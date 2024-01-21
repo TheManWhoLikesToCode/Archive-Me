@@ -1,7 +1,7 @@
 name: Update-Cumulative-Users
 on:
   schedule:
-    - cron: "55 23 * * *"
+    - cron: "55 04 * * *"
   workflow_dispatch:
 
 jobs:
