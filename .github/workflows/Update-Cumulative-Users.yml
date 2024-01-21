@@ -1,17 +1,18 @@
 name: Update-Cumulative-Users
 on:
-    schedule:
-        - cron: "55 23 * * *"
+  schedule:
+    - cron: "55 23 * * *"
+  workflow_dispatch:
 
 jobs:
-  test:
+  update-data:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9.x'
 
@@ -26,10 +27,19 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           python analytics.py
-      - name: Save file
+
+      - name: Commit files
         run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
           git add unique_visitors.csv cumulative_unique_visitors.png
-          git commit -m "Update unique visitors and cumulative visitors"
-          git push origin main
+          git commit -m "Update unique visitors and cumulative visitors" || echo "No changes to commit"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Update data
+          title: "Automated data update"
+          body: "This is an auto-generated update of the cumulative users data."
+          branch: "update-cumulative-users"
+          delete-branch: true
+          base: "main"
