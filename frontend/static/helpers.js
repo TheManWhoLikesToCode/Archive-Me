@@ -1,8 +1,9 @@
 function getConfig() {
     const config = {
         apiUrl: {
-            dev: "http://localhost:5003",
-            prod: "https://api.archive-me.net"
+            dev: "http://devapi.archive-me.net",
+            prod: "https://api.archive-me.net",
+            local: "http://localhost:5003"
         }
     };
     return config;
@@ -10,7 +11,9 @@ function getConfig() {
 
 function getEnv() {
     const hostname = window.location.hostname;
-    return hostname.includes('localhost') ? 'dev' : 'prod';
+    if (hostname.includes('localhost')) return 'local';
+    if (hostname.includes('devapi')) return 'dev';
+    return 'prod';
 }
 
 function getApiUrl() {
