@@ -91,7 +91,7 @@ const app = (() => {
   const showLoadingScreen = () => {
     const loadingScreen = document.getElementById("loading-screen");
     if (loadingScreen) {
-      loadingScreen.style.display = "block";
+      loadingScreen.style.display = "flex";
     }
   };
 
@@ -124,11 +124,10 @@ const app = (() => {
 
   const loginEventHandler = async (e) => {
     e.preventDefault();
+    showLoadingScreen();
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
     const responseContainer = document.getElementById("response-container");
-
-    showLoadingScreen();
 
     try {
       const response = await fetchWithErrorHandler(`${apiUrl}/login`, {
