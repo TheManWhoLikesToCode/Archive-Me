@@ -124,6 +124,7 @@ const app = (() => {
 
   const loginEventHandler = async (e) => {
     e.preventDefault();
+    showLoadingScreen();
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
     const responseContainer = document.getElementById("response-container");
