@@ -1,16 +1,21 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: '[PRIORITY] - '
+title: ''
 labels: ''
 assignees: ''
-
+body:
+  - type: dropdown
+    id: priority
+    attributes:
+      label: What is the priority of this issue?
+      options:
+        - P0
+        - P1
+        - P3
+    validations:
+      required: true
 ---
-
-**Priority Level**
-- [ ] P0 - Critical
-- [ ] P1 - High
-- [ ] P2 - Medium
 
 **Describe the bug**
 A clear and concise description of what the bug is.
