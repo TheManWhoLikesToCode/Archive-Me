@@ -111,7 +111,7 @@ class BlackboardSession:
             self.response = "Not logged in."
             return
 
-        self.enable_instructors()
+        self.enable_instructors_and_year()
         if self.get_InstructorsFound() == False:
             self.response = "No instructors found."
 
@@ -202,10 +202,10 @@ class BlackboardSession:
         except Exception as e:
             logging.error(f"An error occurred during login: {e}")
 
-    def enable_instructors(self):
+    def enable_instructors_and_year(self):
         """
 
-        Enables instructors to be shown
+        Enables instructors & course term year for all courses the user is taking.
 
         self modifies:
         instructorsFound -- A boolean value indicating if instructors were found.
@@ -227,6 +227,7 @@ class BlackboardSession:
                     raise Exception("GET request failed.")
 
                 course_ids = []
+                term_ids = []
 
                 # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
                 soup = BeautifulSoup(get_response.content, "html.parser")
@@ -234,10 +235,18 @@ class BlackboardSession:
                     attrs={"id": re.compile(r'blockAttributes_table_jsListFULL_Student_\d+_\d+_body')})
                 if not course_table:
                     raise Exception("Course table not found.")
+                
+                term_table = soup.find_all(attrs={"id": "termDisplay_table_jsListTermDisplay"})
+                if not term_table:
+                    raise Exception("Term table not found.")
 
                 course_rows = course_table[0].find_all('tr')
                 if not course_rows:
                     raise Exception("Course rows not found.")
+                
+                term_rows = term_table[0].find_all('tr')
+                if not term_rows:
+                    raise Exception("Term rows not found.")
 
                 for row in course_rows:
                     course_id_match = re.search(
@@ -245,6 +254,14 @@ class BlackboardSession:
                     if course_id_match:
                         course_id = course_id_match.group(1)
                         course_ids.append(course_id)
+
+                for row in term_rows:
+                    term_id_match = re.search(
+                        r'termDisplay_table_jsListTermDisplay_row:_(\d+_\d+)', row.get('id', ''))
+                    if term_id_match:
+                        term_id = term_id_match.group(1)
+                        term_ids.append(term_id)
+
 
                 nonce_value = soup.select_one(
                     '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
@@ -274,7 +291,13 @@ class BlackboardSession:
                     payload['amc.showcourse._' + course] = 'true'
                     payload['amc.showcourseid._' + course] = 'true'
                     payload['amc.showinstructors._' + course] = 'true'
-
+                
+                for term in term_ids:
+                    payload['amc.groupbyterm'] = 'true'
+                    payload['selectAll_{}'.format(term)] = 'true'
+                    payload['amc.showterm._{}'.format(term)] = 'true'
+                    payload['termCourses__{}'.format(term)] = 'true'
+                    
                 payload['bottom_Submit'] = 'Submit'
 
                 enable_instructors_response = self._send_post_request(
@@ -331,7 +354,7 @@ class BlackboardSession:
                 raise Exception("POST request failed.")
 
             # Parse the response using Beautiful Soup with lxml parser
-            soup = BeautifulSoup(get_courses_response.content, "lxml")
+            soup = BeautifulSoup(get_courses_response.content, "html.parser")
 
             # Check if the user is not enrolled in any courses
             no_courses_text = 'You are not currently enrolled in any courses.'
@@ -342,11 +365,47 @@ class BlackboardSession:
             try:
                 div_4_1 = soup.find("div", id=re.compile(r"^_4_1termCourses"))
                 courses_list = div_4_1.find_all("ul")[0].find_all("li")
+
             except Exception as e:
                 logging.error(f"Error finding course list: {e}")
                 self.response = "Error finding course list."
                 return
 
+            try:
+                headers = soup.find_all("h3")
+            except Exception as e:
+                logging.error(f"Error finding headers: {e}")
+                self.response = "Error finding headers."
+                return
+            
+            # Get id's from courses and headers
+            course_ids = []
+            header_ids = []
+
+
+            for div in soup.find_all('div', id=re.compile(r'_4_1termCourses__(\d+_\d+)')):
+                course_id_match = re.search(r'_4_1termCourses__(\d+_\d+)', div.get('id', ''))
+                if course_id_match:
+                    course_id = course_id_match.group(1)
+                    course_ids.append(course_id)
+
+            # Extracting header IDs
+            for a in soup.find_all('a', id=re.compile(r'afor_4_1termCourses__(\d+_\d+)')):
+                header_id_match = re.search(r'afor_4_1termCourses__(\d+_\d+)', a.get('id', ''))
+                if header_id_match:
+                    header_id = header_id_match.group(1)
+                    header_ids.append(header_id)
+
+            # Get season and year from headers
+            season_year = {}
+            for header_id in header_ids:
+                header = soup.find('a', id=f'afor_4_1termCourses__{header_id}')
+                if header:
+                    season_year_match = re.search(r'(Spring|Summer|Fall|Winter)\s+(\d{4})', header.text.strip())
+                    if season_year_match:
+                        season, year = season_year_match.groups()
+                        season_year[header_id] = (season, year)
+                    
             # Extract and store links
             hrefs = {course.text.strip(): course.find("a")["href"].strip()
                      for course in courses_list if course.find("a") and course.find("a").get("href")}
@@ -358,19 +417,19 @@ class BlackboardSession:
                         instructor_name = course.find("div").find(
                             "span", class_="name").text.strip()
                         last_name = instructor_name.split()[-1].rstrip(';')
+                        if not last_name:
+                            last_name = "No Instructor"
 
-                        # Extract course details
-                        course_code = re.search(
-                            r'\(([A-Z]{2}-\d{3}-\d{2}L?)\)', course.text)
+                        pattern = r'([A-Z]+-[0-9]+-[0-9]+[A-Z]?)|([A-Z]+-[0-9]+)'
+                        course_code = re.search(pattern, course.text)
+
+                        course_code = course_code.group()
+
                         if course_code:
-                            course_code = course_code.group(1)
-                            # Extract season and year
-                            season_year_match = re.search(
-                                r'(Fall|Spring|Summer|Winter)\s+\d{4}', course.text)
-                            if season_year_match:
-                                season_year = season_year_match.group()
-                                # Format course name
-                                formatted_course_name = f"{course_code}, {last_name}, {season_year}"
+                            for header_id in header_ids:
+                                season, year = season_year[header_id]
+                                
+                                formatted_course_name = f"{course_code}, {last_name}, {season} {year}"
                                 # Add formatted course name to hrefs dictionary
                                 hrefs[formatted_course_name] = hrefs.pop(
                                     course.text.strip())
