@@ -35,6 +35,9 @@ def step_impl(context):
 def step_impl(context):
     assert context.response == "The username you entered cannot be identified."
 
+@then('the response should be "Already logged in."')
+def step_impl(context):
+    assert context.response == "Already logged in."
 
 @given('I am logged in')
 def step_impl(context):

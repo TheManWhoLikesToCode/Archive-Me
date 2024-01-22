@@ -93,6 +93,8 @@ def login():
             resp.set_cookie('user_session', bb_session.session_id,
                             max_age=3600, secure=True, httponly=True)
             return resp
+        elif response == 'Already logged in.':
+            return jsonify({'message': 'Already logged in'}), 200
         else:
             return jsonify({'error': response}), 401
     except Exception as e:
