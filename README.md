@@ -15,6 +15,15 @@ I developed Archive-Me, a full-stack application project, during my breaks from 
 
 ![System Diagram](https://github.com/TheManWhoLikesToCode/Archive-Me/blob/main/System-Diagram.png)
 
+The diagram below displays how the user authentication process is employed by Archive-Me, detailing the steps involved in authenticating a user's access to various resources.
+
+![User Authentication](https://github.com/TheManWhoLikesToCode/Archive-Me/blob/main/Authentication-Flow.png)
+
+Below is the session diagram which goes more indepth with how user sessions are handled.
+
+![Session Diagram](https://github.com/TheManWhoLikesToCode/Archive-Me/blob/main/Session.png)
+
+
 ## Features
 
 - Automated login
