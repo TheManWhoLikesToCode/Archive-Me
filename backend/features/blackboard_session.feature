@@ -10,6 +10,12 @@ Feature: Blackboard Session Management
     When I login
     Then the response should be "The username you entered cannot be identified."
 
+  Scenario: I attempt to login when already logged in
+    Given I have valid credentials
+    And I am logged in
+    When I login
+    Then the response should be "Already logged in."
+
   Scenario: Enable instructors when logged in
     Given I have valid credentials
     And I am logged in

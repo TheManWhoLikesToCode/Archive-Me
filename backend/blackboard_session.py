@@ -146,6 +146,11 @@ class BlackboardSession:
         response -- The response of the login attempt.
 
         """
+
+        if self.is_logged_in == True:
+            self.set_response("Already logged in.")
+            return
+        
         try:
             initial_url = "https://blackboard.kettering.edu/"
             init_response = self._get_initial_url_response(initial_url)
@@ -174,8 +179,11 @@ class BlackboardSession:
             # parse the response using Beautiful Soup with html parser
             soup = BeautifulSoup(login_send_response.content, "html.parser")
 
-            # Log the response of soup to be the response  of the users payload
-            login_payload_response = soup.find(class_='alert alert-danger')
+            try:
+                # Log the response of soup to be the response of the users payload
+                login_payload_response = soup.find(class_='alert alert-danger')
+            except Exception as e:
+                logging.error(f"An error occurred while finding the payload response: {e}")
 
             # If the login_send_response url isn't the same as the login_send_response url
             if login_send_response.url != int_login_page_response.url and login_payload_response == None:
