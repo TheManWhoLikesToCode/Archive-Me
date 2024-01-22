@@ -1,9 +1,9 @@
 name: Bug report
 description: Create a report to help us improve
-title: '[PRIORITY] - '
+title: '[{{ priority-level.label }}] - '
 
 body:
-  - type: checkboxes
+  - type: dropdown
     id: priority-level
     attributes:
       label: Priority Level
@@ -11,6 +11,8 @@ body:
         - label: P0 - Critical
         - label: P1 - High
         - label: P2 - Medium
+    validations:
+      required: true
   - type: textarea
     id: describe-bug
     attributes:
