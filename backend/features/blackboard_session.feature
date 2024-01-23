@@ -1,4 +1,4 @@
-Feature: Blackboard Session Management
+Feature: Blackboard Session Testing
 
   Scenario: Valid credentials login
     Given I have valid credentials
