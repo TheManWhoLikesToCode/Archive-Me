@@ -1,4 +1,5 @@
 from functools import wraps
+from json import JSONDecodeError
 import logging
 import os
 import threading
@@ -71,7 +72,11 @@ def index():
 @app.route('/login', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def login():
-    data = request.json
+    try:
+        data = request.get_json()
+    except JSONDecodeError:
+        return jsonify({'error': 'Invalid JSON format'}), 400
+
     username = data.get('username')
     password = data.get('password')
 
@@ -89,7 +94,7 @@ def login():
             bb_session_manager.put_bb_session(username, bb_session)
 
             resp = make_response(
-                jsonify({'message': 'Logged in successfully'}))
+                jsonify({'message': 'Logged in successfully'}), 200)
             resp.set_cookie('user_session', bb_session.session_id,
                             max_age=3600, secure=True, httponly=True)
             return resp

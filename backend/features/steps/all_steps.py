@@ -66,8 +66,8 @@ def step_impl(context, session_id, user1, user2):
 
 @given('I have valid credentials')
 def step_impl(context):
-    context.username = os.getenv('TEST_USERNAME')
-    context.password = os.getenv('TEST_PASSWORD')
+    context.username = os.environ.get('TEST_USERNAME')
+    context.password = os.environ.get('TEST_PASSWORD')
     context.session = BlackboardSession(
         username=context.username, password=context.password)
 
@@ -92,7 +92,7 @@ def step_impl(context):
         username='InvalidUsername', password='InvalidPassword')
     context.logged_in = context.session.is_logged_in
 
-@given('App is running')
+@given('the app is running')
 def step_impl(context):
     assert context.client
 
@@ -216,8 +216,8 @@ def step_impl(context):
 @when('I pass valid credentials to the login endpoint')
 def step_impl(context):
     context.page = context.client.post('/login', json=dict(
-        username=os.getenv('TEST_USERNAME'),
-        password=os.getenv('TEST_PASSWORD')
+        username=os.environ.get('TEST_USERNAME'),
+        password=os.environ.get('TEST_PASSWORD')
     ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
     response = context.page.get_json()
     assert response['message'] == 'Logged in successfully'
@@ -244,10 +244,61 @@ def step_impl(context):
 def step_impl(context):
     context.page = context.client.post('/login', json=dict(
         username='InvalidUsername',
-        password=os.getenv('TEST_PASSWORD')
+        password=os.environ.get('TEST_PASSWORD')
     ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
     response = context.page.get_json()
     assert response['error'] == 'The username you entered cannot be identified.'
+
+@when('I pass only a username to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username='InvalidUsername',
+        password=''
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'Missing username or password'
+
+@when('I pass only a password to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username='',
+        password='InvalidPassword'
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'Missing username or password'
+
+@when('I pass no credentials to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username='',
+        password=''
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'Missing username or password'
+
+@when('I pass data in an invalid JSON format to the login endpoint')
+def step_impl(context):
+    invalid_json_data = 'Invalid JSON format'
+    context.page = context.client.post('/login', data=invalid_json_data, headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'Invalid JSON payload received.'
+
+
+@when('I pass valid credentials but the server encounters an internal error when logging in')
+def step_impl(context):
+    with patch('blackboard_session.BlackboardSession.login') as mock_login:
+        mock_login.side_effect = Exception("Internal server error")
+        try:
+            context.session.login()
+        except Exception as e:
+            context.exception_message = str(e)
+    
+@when('the user is already logged in')
+def step_impl(context):
+    # Assuming 'context.session' is an instance of BlackboardSession
+    context.session.login()  # First login
+    context.second_login_response = context.session.login()  # Second login attempt
+
 
 #* Then steps
 @then('a new session should be created for "{username}"')
@@ -355,18 +406,38 @@ def step_impl(context, message):
 def step_impl(context, message):
     assert context.get_download_tasks_response == message
 
-@then('The response of "200" and "Logged in Successfully" should be returned')
-def step_impl(context):
-    assert context.page.get_json() == {'message': 'Logged in successfully'}
+@then('the response of "{status_code}" and "{message}" should be returned')
+def step_impl(context, status_code, message):
+    expected_status_code = int(status_code)
 
-@then('The response of "401" and "The username you entered cannot be identified." should be returned')
-def step_impl(context):
-    assert context.page.get_json() == {'error': 'The username you entered cannot be identified.'}
+    # Ensure that context.page contains the response object
+    assert hasattr(context, 'page'), "context does not have 'page' attribute. Make sure the HTTP request was made."
 
-@then('The response of "401" and "The password you entered was incorrect." should be returned')
-def step_impl(context):
-    assert context.page.get_json() == {'error': 'The password you entered was incorrect.'}
+    # Get the actual status code from the response
+    actual_status_code = context.page.status_code
+    assert actual_status_code == expected_status_code, f"Expected status code {expected_status_code}, got {actual_status_code}"
 
-@then('The response of "429" and "Too many requests, please try again later." should be returned')
+    # Parse the JSON response body
+    response_json = context.page.get_json()
+
+    # Check the message or error based on the status code
+    if expected_status_code == 200:
+        assert response_json.get('message') == message, f"Expected message '{message}', got '{response_json.get('message')}'"
+    else:
+        assert response_json.get('error') == message, f"Expected error message '{message}', got '{response_json.get('error')}'"
+
+@then('cookies should be set')
 def step_impl(context):
-    assert context.page.get_json() == {'error': 'Too many requests, please try again later.'}
+    # Ensure that context.page contains the response object
+    assert hasattr(context, 'page'), "context does not have 'page' attribute. Make sure the HTTP request was made."
+
+    # Check if the 'user_session' cookie is set in the response
+    cookies = context.page.headers.get('Set-Cookie')
+    assert cookies is not None, "No cookies were set in the response."
+
+    # Further check for the specific 'user_session' cookie
+    assert 'user_session' in cookies, "The 'user_session' cookie was not set in the response."
+
+@then('an internal server error should be raised')
+def step_impl(context):
+    assert context.exception_message == "Internal server error"
