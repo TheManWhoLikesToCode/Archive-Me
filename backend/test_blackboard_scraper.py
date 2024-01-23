@@ -257,38 +257,6 @@ class TestBlackboardSession(unittest.TestCase):
 
     # * Get Courses *#
 
-    def test_get_courses_logged_in(self):
-        # Set up
-        session = BlackboardSession()
-
-        session.is_logged_in = True
-
-        # Mock the POST request
-        with patch.object(session, '_send_post_request') as mock_post_request:
-            mock_post_request.return_value.status_code = 200
-            mock_post_request.return_value.content = '''
-                <html>
-                    <div id="_4_1termCourses__254_1">
-                        <ul>
-                            <li><a href="course1_link">Course 1</a></li>
-                            <li><a href="course2_link">Course 2</a></li>
-                        </ul>
-                    </div>
-                </html>
-            '''
-
-            # Execute get_courses
-            session.get_courses()
-
-            # Check the response
-            expected_courses = {
-                'Course 1': 'course1_link',
-                'Course 2': 'course2_link'
-            }
-            self.assertEqual(session.courses, expected_courses)
-            self.assertAlmostEqual(
-                session.last_activity_time, time.time(), delta=1)
-
     def test_get_courses_with_instructors_logged_in(self):
         # Set up
         session = BlackboardSession()
