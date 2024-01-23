@@ -1,6 +1,8 @@
 import os
+import random
 import time
 import uuid
+import usernames as usernames
 from behave import given, when, then
 from blackboard_session import BlackboardSession
 from blackboard_session_manager import BlackboardSessionManager
@@ -89,6 +91,10 @@ def step_impl(context):
     context.session = BlackboardSession(
         username='InvalidUsername', password='InvalidPassword')
     context.logged_in = context.session.is_logged_in
+
+@given('App is running')
+def step_impl(context):
+    assert context.client
 
 #* When steps
 @when('I request a session for user "{username}"')
@@ -207,6 +213,41 @@ def step_impl(context):
         context.session.get_download_tasks()
         context.get_download_tasks_response = context.session.response
 
+@when('I pass valid credentials to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username=os.getenv('TEST_USERNAME'),
+        password=os.getenv('TEST_PASSWORD')
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['message'] == 'Logged in successfully'
+
+@when('I pass an incorrect username and password to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username='InvalidUsername',
+        password='InvalidPassword'
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'The username you entered cannot be identified.'
+
+@when('I pass an incorrect password to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username=random.choice(list(usernames.usernames)),
+        password='InvalidPassword'
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'The password you entered was incorrect.'
+
+@when('I pass an incorrect username to the login endpoint')
+def step_impl(context):
+    context.page = context.client.post('/login', json=dict(
+        username='InvalidUsername',
+        password=os.getenv('TEST_PASSWORD')
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    response = context.page.get_json()
+    assert response['error'] == 'The username you entered cannot be identified.'
 
 #* Then steps
 @then('a new session should be created for "{username}"')
@@ -313,3 +354,19 @@ def step_impl(context, message):
 @then('the get download tasks response should be "{message}"')
 def step_impl(context, message):
     assert context.get_download_tasks_response == message
+
+@then('The response of "200" and "Logged in Successfully" should be returned')
+def step_impl(context):
+    assert context.page.get_json() == {'message': 'Logged in successfully'}
+
+@then('The response of "401" and "The username you entered cannot be identified." should be returned')
+def step_impl(context):
+    assert context.page.get_json() == {'error': 'The username you entered cannot be identified.'}
+
+@then('The response of "401" and "The password you entered was incorrect." should be returned')
+def step_impl(context):
+    assert context.page.get_json() == {'error': 'The password you entered was incorrect.'}
+
+@then('The response of "429" and "Too many requests, please try again later." should be returned')
+def step_impl(context):
+    assert context.page.get_json() == {'error': 'Too many requests, please try again later.'}
