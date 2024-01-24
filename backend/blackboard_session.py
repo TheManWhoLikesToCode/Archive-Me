@@ -432,10 +432,12 @@ class BlackboardSession:
                 # Process instructors and format course names
                 for course in courses_list:
                     try:
-                        instructor_name = course.find("div").find(
-                            "span", class_="name").text.strip()
-                        last_name = instructor_name.split()[-1].rstrip(';')
-                        if not last_name:
+                        try:
+                            instructor_name = course.find("div").find("span", class_="name").text.strip()
+                            last_name = instructor_name.split()[-1].rstrip(';')
+                            if not last_name:
+                                last_name = "No Instructor"
+                        except:
                             last_name = "No Instructor"
 
                         pattern = r'([A-Z]+-[0-9]+-[0-9]+[A-Z]?)|([A-Z]+-[0-9]+)'

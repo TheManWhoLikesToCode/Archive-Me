@@ -151,17 +151,77 @@ class TestBlackboardSession(unittest.TestCase):
         with patch.object(session, '_get_request') as mock_get_request:
             mock_get_request.return_value.status_code = 200
             mock_get_request.return_value.content = '''
-            <html>
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Course and Term Management</title>
+                </head>
                 <body>
-                    <form id="moduleEditForm">
-                        <input type="hidden" value="fake_nonce_value">
+                    <form method="post" action="tabAction?tab_tab_group_id=_1_1&amp;forwardUrl=proc_edit/_4_1/bbcourseorg&amp;recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1" id="moduleEditForm">
+                        <input type="hidden" name="blackboard.platform.security.NonceUtil.nonce" value="3355f352-678e-4821-bd3d-a6f548fd7cf9">
+                        <input type="hidden" name="cmd" id="cmd" value="processEdit">
+                        <input type="hidden" name="serviceLevel" id="serviceLevel" value="">
+
+                        <!-- Course Table -->
+                        <table id="blockAttributes_table_jsListFULL_Student_35314_1">
+                            <!-- Table Headers (simplified for brevity) -->
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Course Name</th>
+                                    <th>Course ID</th>
+                                    <th>Instructors</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blockAttributes_table_jsListFULL_Student_35314_1_body">
+                                <!-- Course Rows -->
+                                <tr id="blockAttributes_table_jsListFULL_Student_35314_1_row:_52268_1">
+                                    <td align="LEFT" class="" id="miniListElement-showcoursename:row_0">
+                                        <input id="amc.showcourse._52268_1" type="checkbox" value="true" name="amc.showcourse._52268_1" checked="checked">
+                                    </td>
+                                    <td align="LEFT" class="" id="miniListElement-showcourseid:row_0">
+                                        <input id="amc.showcourseid._52268_1" type="checkbox" value="true" name="amc.showcourseid._52268_1" checked="checked">
+                                    </td>
+                                    <td align="LEFT" class="" id="miniListElement-showinstructors:row_0">
+                                        <input id="amc.showinstructors._52268_1" type="checkbox" value="true" name="amc.showinstructors._52268_1" checked="checked">
+                                    </td>
+                                </tr>
+                                <!-- Additional course rows can be added here -->
+                            </tbody>
+                        </table>
+
+                        <!-- Term Table -->
+                        <table id="termDisplay_table_jsListTermDisplay">
+                            <!-- Table Headers (simplified for brevity) -->
+                            <thead>
+                                <tr>
+                                    <th>Term Name</th>
+                                    <th>Term Duration</th>
+                                    <th>Show Term</th>
+                                    <th>Expand Term</th>
+                                </tr>
+                            </thead>
+                            <tbody id="termDisplay_table_jsListTermDisplay_body">
+                                <!-- Term Rows -->
+                                <tr id="termDisplay_table_jsListTermDisplay_row:_243_1">
+                                    <td align="LEFT" class="" id="miniListElement-showterm:row_0">
+                                        <input id="amc.showterm._243_1" type="checkbox" value="true" name="amc.showterm._243_1" checked="checked">
+                                    </td>
+                                    <td align="LEFT" class="" id="miniListElement-expandterm:row_0">
+                                        <input id="termCourses__243_1" type="checkbox" value="true" name="termCourses__243_1" checked="checked">
+                                    </td>
+                                </tr>
+                                <!-- Additional term rows can be added here -->
+                            </tbody>
+                        </table>
+
+                        <!-- Submit Button -->
+                        <input id="bottom_Submit" class="submit button-1" name="bottom_Submit" type="submit" value="Submit">
                     </form>
-                    <table id="blockAttributes_table_jsListFULL_Student_1_1_body">
-                        <tr id="FULL_Student_1_1_row:_123_456"></tr>
-                        <tr id="FULL_Student_1_1_row:_789_101"></tr>
-                    </table>
                 </body>
-            </html>
+                </html>
+
             '''
 
             # Mock the POST request
@@ -225,17 +285,77 @@ class TestBlackboardSession(unittest.TestCase):
         with patch.object(session, '_get_request') as mock_get_request:
             mock_get_request.return_value.status_code = 200
             mock_get_request.return_value.content = '''
-                <html>
-                    <body>
-                        <form id="moduleEditForm">
-                            <input type="hidden" value="fake_nonce_value">
-                        </form>
-                        <table id="blockAttributes_table_jsListFULL_Student_1_1_body">
-                            <tr id="FULL_Student_1_1_row:_123_456"></tr>
-                            <tr id="FULL_Student_1_1_row:_789_101"></tr>
-                        </table>
-                    </body>
-                </html>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Course and Term Management</title>
+            </head>
+            <body>
+                <form method="post" action="tabAction?tab_tab_group_id=_1_1&amp;forwardUrl=proc_edit/_4_1/bbcourseorg&amp;recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1" id="moduleEditForm">
+                    <input type="hidden" name="blackboard.platform.security.NonceUtil.nonce" value="3355f352-678e-4821-bd3d-a6f548fd7cf9">
+                    <input type="hidden" name="cmd" id="cmd" value="processEdit">
+                    <input type="hidden" name="serviceLevel" id="serviceLevel" value="">
+
+                    <!-- Course Table -->
+                    <table id="blockAttributes_table_jsListFULL_Student_35314_1">
+                        <!-- Table Headers (simplified for brevity) -->
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Course Name</th>
+                                <th>Course ID</th>
+                                <th>Instructors</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blockAttributes_table_jsListFULL_Student_35314_1_body">
+                            <!-- Course Rows -->
+                            <tr id="blockAttributes_table_jsListFULL_Student_35314_1_row:_52268_1">
+                                <td align="LEFT" class="" id="miniListElement-showcoursename:row_0">
+                                    <input id="amc.showcourse._52268_1" type="checkbox" value="true" name="amc.showcourse._52268_1" checked="checked">
+                                </td>
+                                <td align="LEFT" class="" id="miniListElement-showcourseid:row_0">
+                                    <input id="amc.showcourseid._52268_1" type="checkbox" value="true" name="amc.showcourseid._52268_1" checked="checked">
+                                </td>
+                                <td align="LEFT" class="" id="miniListElement-showinstructors:row_0">
+                                    <input id="amc.showinstructors._52268_1" type="checkbox" value="true" name="amc.showinstructors._52268_1" checked="checked">
+                                </td>
+                            </tr>
+                            <!-- Additional course rows can be added here -->
+                        </tbody>
+                    </table>
+
+                    <!-- Term Table -->
+                    <table id="termDisplay_table_jsListTermDisplay">
+                        <!-- Table Headers (simplified for brevity) -->
+                        <thead>
+                            <tr>
+                                <th>Term Name</th>
+                                <th>Term Duration</th>
+                                <th>Show Term</th>
+                                <th>Expand Term</th>
+                            </tr>
+                        </thead>
+                        <tbody id="termDisplay_table_jsListTermDisplay_body">
+                            <!-- Term Rows -->
+                            <tr id="termDisplay_table_jsListTermDisplay_row:_243_1">
+                                <td align="LEFT" class="" id="miniListElement-showterm:row_0">
+                                    <input id="amc.showterm._243_1" type="checkbox" value="true" name="amc.showterm._243_1" checked="checked">
+                                </td>
+                                <td align="LEFT" class="" id="miniListElement-expandterm:row_0">
+                                    <input id="termCourses__243_1" type="checkbox" value="true" name="termCourses__243_1" checked="checked">
+                                </td>
+                            </tr>
+                            <!-- Additional term rows can be added here -->
+                        </tbody>
+                    </table>
+
+                    <!-- Submit Button -->
+                    <input id="bottom_Submit" class="submit button-1" name="bottom_Submit" type="submit" value="Submit">
+                </form>
+            </body>
+            </html>
+
             '''
 
             # Mock the POST request
@@ -331,8 +451,8 @@ class TestBlackboardSession(unittest.TestCase):
 
             # Check the response
             expected_courses = {
-                'CILE-400-1, Gebhardt, Summer 2023': 'https://learn.kettering.edu/webapps/blackboard/execute/launcher?type=Course&id=_51316_1&url=',
-                'COOP-002-01, No Instructor, Winter 2024': 'https://learn.kettering.edu/webapps/blackboard/execute/launcher?type=Course&id=_52268_1&url='
+                'CILE-400-01, Gebhardt, Summer 2023': '/webapps/blackboard/execute/launcher?type=Course&id=_51316_1&url=',
+                'COOP-002-01, No Instructor, Winter 2024': '/webapps/blackboard/execute/launcher?type=Course&id=_52268_1&url='
             }
             self.assertEqual(session.courses, expected_courses)
             self.assertAlmostEqual(
