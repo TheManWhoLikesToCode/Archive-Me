@@ -1,9 +1,7 @@
 from functools import wraps
-from json import JSONDecodeError
 import logging
 import os
 import threading
-import time
 
 from dotenv import load_dotenv
 from flask import Flask, abort, after_this_request, jsonify, make_response, request, send_from_directory
@@ -74,7 +72,7 @@ def index():
 def login():
     try:
         data = request.get_json()
-    except JSONDecodeError:
+    except Exception as e:
         return jsonify({'error': 'Invalid JSON format'}), 400
 
     username = data.get('username')

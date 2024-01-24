@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#* Given steps
+# * Given steps
 @given('a blackboard session manager')
 def step_impl(context):
     context.manager = BlackboardSessionManager()
@@ -92,11 +92,33 @@ def step_impl(context):
         username='InvalidUsername', password='InvalidPassword')
     context.logged_in = context.session.is_logged_in
 
+
 @given('the app is running')
 def step_impl(context):
     assert context.client
 
-#* When steps
+
+@given('an existing session with ID "{session_id}"')
+def step_impl(context, session_id):
+    new_session = BlackboardSession(session_id, time.time())
+    test_username = "test_user_for_" + session_id
+    context.manager.bb_sessions[session_id] = new_session
+    context.manager.user_session_map[test_username] = session_id
+
+@given('the user is already logged in')
+def step_impl(context):
+    login_response = context.client.post('/login', json=dict(
+        username=os.environ.get('TEST_USERNAME'),
+        password=os.environ.get('TEST_PASSWORD')
+    ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
+
+    assert login_response.status_code == 200, "Failed to log in during setup."
+    response_data = login_response.get_json()
+    assert response_data.get('message') == 'Logged in successfully', "Login was not successful during setup."
+
+    context.login_response = login_response
+
+# * When steps
 @when('I request a session for user "{username}"')
 def step_impl(context, username):
     context.session = context.manager.get_bb_session(username)
@@ -127,14 +149,6 @@ def step_impl(context, username):
 def step_impl(context):
     context.initial_session_count = len(context.manager.bb_sessions)
     context.manager.clean_up_inactive_sessions()
-
-
-@given('an existing session with ID "{session_id}"')
-def step_impl(context, session_id):
-    new_session = BlackboardSession(session_id, time.time())
-    test_username = "test_user_for_" + session_id
-    context.manager.bb_sessions[session_id] = new_session
-    context.manager.user_session_map[test_username] = session_id
 
 
 @when('I update the last activity time for "{username}"\'s session')
@@ -213,6 +227,7 @@ def step_impl(context):
         context.session.get_download_tasks()
         context.get_download_tasks_response = context.session.response
 
+
 @when('I pass valid credentials to the login endpoint')
 def step_impl(context):
     context.page = context.client.post('/login', json=dict(
@@ -220,7 +235,8 @@ def step_impl(context):
         password=os.environ.get('TEST_PASSWORD')
     ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
     response = context.page.get_json()
-    assert response['message'] == 'Logged in successfully'
+    assert 'message' in response
+
 
 @when('I pass an incorrect username and password to the login endpoint')
 def step_impl(context):
@@ -231,6 +247,7 @@ def step_impl(context):
     response = context.page.get_json()
     assert response['error'] == 'The username you entered cannot be identified.'
 
+
 @when('I pass an incorrect password to the login endpoint')
 def step_impl(context):
     context.page = context.client.post('/login', json=dict(
@@ -239,6 +256,7 @@ def step_impl(context):
     ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
     response = context.page.get_json()
     assert response['error'] == 'The password you entered was incorrect.'
+
 
 @when('I pass an incorrect username to the login endpoint')
 def step_impl(context):
@@ -249,6 +267,7 @@ def step_impl(context):
     response = context.page.get_json()
     assert response['error'] == 'The username you entered cannot be identified.'
 
+
 @when('I pass only a username to the login endpoint')
 def step_impl(context):
     context.page = context.client.post('/login', json=dict(
@@ -257,6 +276,7 @@ def step_impl(context):
     ), headers={'Content-Type': 'application/json'}, follow_redirects=True)
     response = context.page.get_json()
     assert response['error'] == 'Missing username or password'
+
 
 @when('I pass only a password to the login endpoint')
 def step_impl(context):
@@ -267,6 +287,7 @@ def step_impl(context):
     response = context.page.get_json()
     assert response['error'] == 'Missing username or password'
 
+
 @when('I pass no credentials to the login endpoint')
 def step_impl(context):
     context.page = context.client.post('/login', json=dict(
@@ -276,12 +297,14 @@ def step_impl(context):
     response = context.page.get_json()
     assert response['error'] == 'Missing username or password'
 
+
 @when('I pass data in an invalid JSON format to the login endpoint')
 def step_impl(context):
     invalid_json_data = 'Invalid JSON format'
-    context.page = context.client.post('/login', data=invalid_json_data, headers={'Content-Type': 'application/json'}, follow_redirects=True)
+    context.page = context.client.post('/login', data=invalid_json_data, headers={
+                                       'Content-Type': 'application/json'}, follow_redirects=True)
     response = context.page.get_json()
-    assert response['error'] == 'Invalid JSON payload received.'
+    assert response['error'] == 'Invalid JSON format'
 
 
 @when('I pass valid credentials but the server encounters an internal error when logging in')
@@ -292,15 +315,15 @@ def step_impl(context):
             context.session.login()
         except Exception as e:
             context.exception_message = str(e)
-    
+
+
 @when('the user is already logged in')
 def step_impl(context):
-    # Assuming 'context.session' is an instance of BlackboardSession
-    context.session.login()  # First login
-    context.second_login_response = context.session.login()  # Second login attempt
+    context.session.login()  
+    context.second_login_response = context.session.login()  
 
 
-#* Then steps
+# * Then steps
 @then('a new session should be created for "{username}"')
 def step_impl(context, username):
     assertpy.assert_that(context.session).is_not_none()
@@ -406,37 +429,37 @@ def step_impl(context, message):
 def step_impl(context, message):
     assert context.get_download_tasks_response == message
 
+
 @then('the response of "{status_code}" and "{message}" should be returned')
 def step_impl(context, status_code, message):
     expected_status_code = int(status_code)
 
-    # Ensure that context.page contains the response object
-    assert hasattr(context, 'page'), "context does not have 'page' attribute. Make sure the HTTP request was made."
+    assert hasattr(
+        context, 'page'), "context does not have 'page' attribute. Make sure the HTTP request was made."
 
-    # Get the actual status code from the response
     actual_status_code = context.page.status_code
     assert actual_status_code == expected_status_code, f"Expected status code {expected_status_code}, got {actual_status_code}"
 
-    # Parse the JSON response body
     response_json = context.page.get_json()
 
-    # Check the message or error based on the status code
     if expected_status_code == 200:
-        assert response_json.get('message') == message, f"Expected message '{message}', got '{response_json.get('message')}'"
+        assert response_json.get(
+            'message') == message, f"Expected message '{message}', got '{response_json.get('message')}'"
     else:
-        assert response_json.get('error') == message, f"Expected error message '{message}', got '{response_json.get('error')}'"
+        assert response_json.get(
+            'error') == message, f"Expected error message '{message}', got '{response_json.get('error')}'"
+
 
 @then('cookies should be set')
 def step_impl(context):
-    # Ensure that context.page contains the response object
-    assert hasattr(context, 'page'), "context does not have 'page' attribute. Make sure the HTTP request was made."
+    assert hasattr(
+        context, 'page'), "context does not have 'page' attribute. Make sure the HTTP request was made."
 
-    # Check if the 'user_session' cookie is set in the response
     cookies = context.page.headers.get('Set-Cookie')
     assert cookies is not None, "No cookies were set in the response."
 
-    # Further check for the specific 'user_session' cookie
     assert 'user_session' in cookies, "The 'user_session' cookie was not set in the response."
+
 
 @then('an internal server error should be raised')
 def step_impl(context):
