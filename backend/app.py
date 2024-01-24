@@ -110,7 +110,7 @@ def logout():
     user_session = request.cookies.get('user_session')
     if user_session:
         # Remove the session from BlackboardSessionManager
-        bb_session_manager.delete_bb_session(user_session)
+        bb_session_manager.delete_bb_session_by_id(user_session)
 
         # Clear the user's session cookie
         resp = make_response(jsonify({'message': 'Logged out successfully'}))
