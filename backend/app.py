@@ -2,7 +2,6 @@ from functools import wraps
 import logging
 import os
 import threading
-import time
 
 from dotenv import load_dotenv
 from flask import Flask, abort, after_this_request, jsonify, make_response, request, send_from_directory
@@ -71,7 +70,11 @@ def index():
 @app.route('/login', methods=['POST'])
 @cross_origin(supports_credentials=True)
 def login():
-    data = request.json
+    try:
+        data = request.get_json()
+    except Exception as e:
+        return jsonify({'error': 'Invalid JSON format'}), 400
+
     username = data.get('username')
     password = data.get('password')
 
@@ -89,7 +92,7 @@ def login():
             bb_session_manager.put_bb_session(username, bb_session)
 
             resp = make_response(
-                jsonify({'message': 'Logged in successfully'}))
+                jsonify({'message': 'Logged in successfully'}), 200)
             resp.set_cookie('user_session', bb_session.session_id,
                             max_age=3600, secure=True, httponly=True)
             return resp
@@ -107,7 +110,7 @@ def logout():
     user_session = request.cookies.get('user_session')
     if user_session:
         # Remove the session from BlackboardSessionManager
-        bb_session_manager.delete_bb_session(user_session)
+        bb_session_manager.delete_bb_session_by_id(user_session)
 
         # Clear the user's session cookie
         resp = make_response(jsonify({'message': 'Logged out successfully'}))

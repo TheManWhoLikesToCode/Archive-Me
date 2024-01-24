@@ -48,7 +48,18 @@ class BlackboardSessionManager:
         with self.lock:
             session_id = self.user_session_map.pop(username, None)
             if session_id:
-                return self.bb_sessions.pop(session_id, None)
+                del self.bb_sessions[session_id]
+                return True
+            return False
+    
+    def delete_bb_session_by_id(self, session_id):
+        with self.lock:
+            for user, sid in self.user_session_map.items():
+                if sid == session_id:
+                    del self.user_session_map[user]
+                    del self.bb_sessions[session_id]
+                    return True
+            return False
 
     def clean_up_inactive_sessions(self, inactivity_threshold_seconds=3600):
         with self.lock:
