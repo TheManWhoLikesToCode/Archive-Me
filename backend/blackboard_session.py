@@ -111,7 +111,7 @@ class BlackboardSession:
             self.response = "Not logged in."
             return
 
-        self.enable_instructors()
+        self.enable_instructors_and_year_season()
         if self.get_InstructorsFound() == False:
             self.response = "No instructors found."
 
@@ -150,7 +150,7 @@ class BlackboardSession:
         if self.is_logged_in == True:
             self.set_response("Already logged in.")
             return
-        
+
         try:
             initial_url = "https://blackboard.kettering.edu/"
             init_response = self._get_initial_url_response(initial_url)
@@ -183,7 +183,8 @@ class BlackboardSession:
                 # Log the response of soup to be the response of the users payload
                 login_payload_response = soup.find(class_='alert alert-danger')
             except Exception as e:
-                logging.error(f"An error occurred while finding the payload response: {e}")
+                logging.error(
+                    f"An error occurred while finding the payload response: {e}")
 
             # If the login_send_response url isn't the same as the login_send_response url
             if login_send_response.url != int_login_page_response.url and login_payload_response == None:
@@ -202,10 +203,10 @@ class BlackboardSession:
         except Exception as e:
             logging.error(f"An error occurred during login: {e}")
 
-    def enable_instructors(self):
+    def enable_instructors_and_year_season(self):
         """
 
-        Enables instructors to be shown
+        Enables instructors & course term year for all courses the user is taking.
 
         self modifies:
         instructorsFound -- A boolean value indicating if instructors were found.
@@ -227,6 +228,7 @@ class BlackboardSession:
                     raise Exception("GET request failed.")
 
                 course_ids = []
+                term_ids = []
 
                 # Using beautiful soup get the value from this input #moduleEditForm > input[type=hidden]:nth-child(1)
                 soup = BeautifulSoup(get_response.content, "html.parser")
@@ -235,9 +237,18 @@ class BlackboardSession:
                 if not course_table:
                     raise Exception("Course table not found.")
 
+                term_table = soup.find_all(
+                    attrs={"id": "termDisplay_table_jsListTermDisplay"})
+                if not term_table:
+                    raise Exception("Term table not found.")
+
                 course_rows = course_table[0].find_all('tr')
                 if not course_rows:
                     raise Exception("Course rows not found.")
+
+                term_rows = term_table[0].find_all('tr')
+                if not term_rows:
+                    raise Exception("Term rows not found.")
 
                 for row in course_rows:
                     course_id_match = re.search(
@@ -245,6 +256,13 @@ class BlackboardSession:
                     if course_id_match:
                         course_id = course_id_match.group(1)
                         course_ids.append(course_id)
+
+                for row in term_rows:
+                    term_id_match = re.search(
+                        r'termDisplay_table_jsListTermDisplay_row:_(\d+_\d+)', row.get('id', ''))
+                    if term_id_match:
+                        term_id = term_id_match.group(1)
+                        term_ids.append(term_id)
 
                 nonce_value = soup.select_one(
                     '#moduleEditForm > input[type=hidden]:nth-child(1)')['value']
@@ -274,6 +292,12 @@ class BlackboardSession:
                     payload['amc.showcourse._' + course] = 'true'
                     payload['amc.showcourseid._' + course] = 'true'
                     payload['amc.showinstructors._' + course] = 'true'
+
+                for term in term_ids:
+                    payload['amc.groupbyterm'] = 'true'
+                    payload['selectAll_{}'.format(term)] = 'true'
+                    payload['amc.showterm._{}'.format(term)] = 'true'
+                    payload['termCourses__{}'.format(term)] = 'true'
 
                 payload['bottom_Submit'] = 'Submit'
 
@@ -330,8 +354,8 @@ class BlackboardSession:
             if get_courses_response.status_code != 200:
                 raise Exception("POST request failed.")
 
-            # Parse the response using Beautiful Soup with lxml parser
-            soup = BeautifulSoup(get_courses_response.content, "lxml")
+            # Parse the response using Beautiful Soup
+            soup = BeautifulSoup(get_courses_response.content)
 
             # Check if the user is not enrolled in any courses
             no_courses_text = 'You are not currently enrolled in any courses.'
@@ -339,13 +363,66 @@ class BlackboardSession:
                 self.response = no_courses_text
                 return
 
+            course_details = {}
+            courses_list = []
             try:
-                div_4_1 = soup.find("div", id=re.compile(r"^_4_1termCourses"))
-                courses_list = div_4_1.find_all("ul")[0].find_all("li")
+                div_4_1 = soup.find_all(
+                    "div", id=re.compile(r'^_4_1termCourses'))
+                for div in div_4_1:
+                    course_id_match = re.search(
+                        r'_4_1termCourses__(\d+_\d+)', div.get('id', ''))
+                    if course_id_match:
+                        pattern = r'([A-Z]+-[0-9]+-[0-9]+[A-Z]?)|([A-Z]+-[0-9]+)'
+                        course_code = re.search(pattern, div.text)
+                        course_code = course_code.group()
+
+                        course_id = course_id_match.group(1)
+                        course_details[course_code] = course_id
+                    courses_list.extend(div.find_all("li"))
+
             except Exception as e:
                 logging.error(f"Error finding course list: {e}")
-                self.response = "Error finding course list."
-                return
+                return "Error finding course list."
+
+            course_ids = []
+            header_ids = []
+            season_year = {}
+
+            try:
+                # Extracting course IDs
+                for div in soup.find_all('div', id=re.compile(r'_4_1termCourses__(\d+_\d+)')):
+                    course_id_match = re.search(
+                        r'_4_1termCourses__(\d+_\d+)', div.get('id', ''))
+                    if course_id_match:
+                        course_ids.append(course_id_match.group(1))
+                # Extracting header IDs
+                for a in soup.find_all('a', id=re.compile(r'afor_4_1termCourses__(\d+_\d+)')):
+                    header_id_match = re.search(
+                        r'afor_4_1termCourses__(\d+_\d+)', a.get('id', ''))
+                    if header_id_match:
+                        header_id = header_id_match.group(1)
+                        header_ids.append(header_id)
+
+                # Extract the season and year from the header
+                for header_id in header_ids:
+                    header = soup.find(
+                        'a', id=f'afor_4_1termCourses__{header_id}')
+                    if header:
+                        season_year_match = re.search(
+                            r'(Spring|Summer|Fall|Winter)\s+(\d{4})', header.text.strip())
+                        if season_year_match:
+                            season, year = season_year_match.groups()
+                            season_year[header_id] = (season, year)
+
+                # Make a dictionary of course id's and their season and year
+                course_season_mapping = {}
+                for course_id in course_ids:
+                    if course_id in season_year:
+                        course_season_mapping[course_id] = season_year[course_id]
+
+            except Exception as e:
+                logging.error(f"Error processing course data: {e}")
+                return "Error processing course data."
 
             # Extract and store links
             hrefs = {course.text.strip(): course.find("a")["href"].strip()
@@ -355,25 +432,26 @@ class BlackboardSession:
                 # Process instructors and format course names
                 for course in courses_list:
                     try:
-                        instructor_name = course.find("div").find(
-                            "span", class_="name").text.strip()
-                        last_name = instructor_name.split()[-1].rstrip(';')
+                        try:
+                            instructor_name = course.find("div").find("span", class_="name").text.strip()
+                            last_name = instructor_name.split()[-1].rstrip(';')
+                            if not last_name:
+                                last_name = "No Instructor"
+                        except:
+                            last_name = "No Instructor"
 
-                        # Extract course details
-                        course_code = re.search(
-                            r'\(([A-Z]{2}-\d{3}-\d{2}L?)\)', course.text)
+                        pattern = r'([A-Z]+-[0-9]+-[0-9]+[A-Z]?)|([A-Z]+-[0-9]+)'
+                        course_code = re.search(pattern, course.text)
+
+                        course_code = course_code.group()
+
                         if course_code:
-                            course_code = course_code.group(1)
-                            # Extract season and year
-                            season_year_match = re.search(
-                                r'(Fall|Spring|Summer|Winter)\s+\d{4}', course.text)
-                            if season_year_match:
-                                season_year = season_year_match.group()
-                                # Format course name
-                                formatted_course_name = f"{course_code}, {last_name}, {season_year}"
-                                # Add formatted course name to hrefs dictionary
-                                hrefs[formatted_course_name] = hrefs.pop(
-                                    course.text.strip())
+                            course_id = course_details[course_code]
+                            season, year = course_season_mapping[course_id]
+                            formatted_course_name = f"{course_code}, {last_name}, {season} {year}"
+                            # Add formatted course name to hrefs dictionary
+                            hrefs[formatted_course_name] = hrefs.pop(
+                                course.text.strip())
                     except Exception as e:
                         logging.error(
                             f"Error processing instructor for course {course.text.strip()}: {e}")
@@ -403,7 +481,8 @@ class BlackboardSession:
             return
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        session_files_path = os.path.join(current_dir, 'backend', 'Session Files') if os.path.basename(current_dir) != 'backend' else os.path.join(current_dir, 'Session Files')
+        session_files_path = os.path.join(current_dir, 'backend', 'Session Files') if os.path.basename(
+            current_dir) != 'backend' else os.path.join(current_dir, 'Session Files')
 
         zip_file_name = f'{self.username}_downloaded_content.zip'
         zip_file_path = os.path.join(current_dir, zip_file_name)
@@ -424,7 +503,8 @@ class BlackboardSession:
             name, current_extension = os.path.splitext(assignment_name)
 
             if current_extension:
-                mime_of_current_extension = mimetypes.guess_type(assignment_name)[0]
+                mime_of_current_extension = mimetypes.guess_type(assignment_name)[
+                    0]
                 extension = current_extension if mime_of_current_extension == content_type else guessed_extension or current_extension
             else:
                 if 'html' in content_type or b'<html' in response.content or b'<!DOCTYPE HTML' in response.content or b'<html lang="en-US">' in response.content:
@@ -433,7 +513,8 @@ class BlackboardSession:
 
             # Skip download if file type is None
             if extension is None:
-                print(f"Skipped downloading {assignment_name} as file type could not be determined.")
+                print(
+                    f"Skipped downloading {assignment_name} as file type could not be determined.")
                 return
 
             file_path = os.path.join(base_directory, name + extension)
@@ -451,14 +532,14 @@ class BlackboardSession:
                 for file in files:
                     if file.endswith('.pdf') or file.endswith('.docx'):
                         file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, session_files_path)
+                        arcname = os.path.relpath(
+                            file_path, session_files_path)
                         zipf.write(file_path, arcname=arcname)
 
         self.zipFound = True
         self.last_activity_time = time.time()
 
         return os.path.relpath(zip_file_path, os.getcwd())
-
 
     def get_download_tasks(self):
         """

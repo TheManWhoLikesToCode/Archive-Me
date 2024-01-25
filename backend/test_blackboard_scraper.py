@@ -151,17 +151,77 @@ class TestBlackboardSession(unittest.TestCase):
         with patch.object(session, '_get_request') as mock_get_request:
             mock_get_request.return_value.status_code = 200
             mock_get_request.return_value.content = '''
-            <html>
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Course and Term Management</title>
+                </head>
                 <body>
-                    <form id="moduleEditForm">
-                        <input type="hidden" value="fake_nonce_value">
+                    <form method="post" action="tabAction?tab_tab_group_id=_1_1&amp;forwardUrl=proc_edit/_4_1/bbcourseorg&amp;recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1" id="moduleEditForm">
+                        <input type="hidden" name="blackboard.platform.security.NonceUtil.nonce" value="3355f352-678e-4821-bd3d-a6f548fd7cf9">
+                        <input type="hidden" name="cmd" id="cmd" value="processEdit">
+                        <input type="hidden" name="serviceLevel" id="serviceLevel" value="">
+
+                        <!-- Course Table -->
+                        <table id="blockAttributes_table_jsListFULL_Student_35314_1">
+                            <!-- Table Headers (simplified for brevity) -->
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Course Name</th>
+                                    <th>Course ID</th>
+                                    <th>Instructors</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blockAttributes_table_jsListFULL_Student_35314_1_body">
+                                <!-- Course Rows -->
+                                <tr id="blockAttributes_table_jsListFULL_Student_35314_1_row:_52268_1">
+                                    <td align="LEFT" class="" id="miniListElement-showcoursename:row_0">
+                                        <input id="amc.showcourse._52268_1" type="checkbox" value="true" name="amc.showcourse._52268_1" checked="checked">
+                                    </td>
+                                    <td align="LEFT" class="" id="miniListElement-showcourseid:row_0">
+                                        <input id="amc.showcourseid._52268_1" type="checkbox" value="true" name="amc.showcourseid._52268_1" checked="checked">
+                                    </td>
+                                    <td align="LEFT" class="" id="miniListElement-showinstructors:row_0">
+                                        <input id="amc.showinstructors._52268_1" type="checkbox" value="true" name="amc.showinstructors._52268_1" checked="checked">
+                                    </td>
+                                </tr>
+                                <!-- Additional course rows can be added here -->
+                            </tbody>
+                        </table>
+
+                        <!-- Term Table -->
+                        <table id="termDisplay_table_jsListTermDisplay">
+                            <!-- Table Headers (simplified for brevity) -->
+                            <thead>
+                                <tr>
+                                    <th>Term Name</th>
+                                    <th>Term Duration</th>
+                                    <th>Show Term</th>
+                                    <th>Expand Term</th>
+                                </tr>
+                            </thead>
+                            <tbody id="termDisplay_table_jsListTermDisplay_body">
+                                <!-- Term Rows -->
+                                <tr id="termDisplay_table_jsListTermDisplay_row:_243_1">
+                                    <td align="LEFT" class="" id="miniListElement-showterm:row_0">
+                                        <input id="amc.showterm._243_1" type="checkbox" value="true" name="amc.showterm._243_1" checked="checked">
+                                    </td>
+                                    <td align="LEFT" class="" id="miniListElement-expandterm:row_0">
+                                        <input id="termCourses__243_1" type="checkbox" value="true" name="termCourses__243_1" checked="checked">
+                                    </td>
+                                </tr>
+                                <!-- Additional term rows can be added here -->
+                            </tbody>
+                        </table>
+
+                        <!-- Submit Button -->
+                        <input id="bottom_Submit" class="submit button-1" name="bottom_Submit" type="submit" value="Submit">
                     </form>
-                    <table id="blockAttributes_table_jsListFULL_Student_1_1_body">
-                        <tr id="FULL_Student_1_1_row:_123_456"></tr>
-                        <tr id="FULL_Student_1_1_row:_789_101"></tr>
-                    </table>
                 </body>
-            </html>
+                </html>
+
             '''
 
             # Mock the POST request
@@ -171,7 +231,7 @@ class TestBlackboardSession(unittest.TestCase):
                     'Location': 'https://kettering.blackboard.com'}
 
                 # Execute enable_instructors
-                session.enable_instructors()
+                session.enable_instructors_and_year_season()
 
                 # Check the response
                 self.assertTrue(session.instructorsFound)
@@ -185,7 +245,7 @@ class TestBlackboardSession(unittest.TestCase):
         session.is_logged_in = False
 
         # Execute enable_instructors
-        session.enable_instructors()
+        session.enable_instructors_and_year_season()
 
         # Check the response
         self.assertEqual(session.response, "Not logged in.")
@@ -205,7 +265,7 @@ class TestBlackboardSession(unittest.TestCase):
             # Mock the logging.error function
             with patch('logging.error') as mock_logging_error:
                 # Execute enable_instructors
-                session.enable_instructors()
+                session.enable_instructors_and_year_season()
 
                 # Check the response
                 self.assertFalse(session.instructorsFound)
@@ -225,17 +285,77 @@ class TestBlackboardSession(unittest.TestCase):
         with patch.object(session, '_get_request') as mock_get_request:
             mock_get_request.return_value.status_code = 200
             mock_get_request.return_value.content = '''
-                <html>
-                    <body>
-                        <form id="moduleEditForm">
-                            <input type="hidden" value="fake_nonce_value">
-                        </form>
-                        <table id="blockAttributes_table_jsListFULL_Student_1_1_body">
-                            <tr id="FULL_Student_1_1_row:_123_456"></tr>
-                            <tr id="FULL_Student_1_1_row:_789_101"></tr>
-                        </table>
-                    </body>
-                </html>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Course and Term Management</title>
+            </head>
+            <body>
+                <form method="post" action="tabAction?tab_tab_group_id=_1_1&amp;forwardUrl=proc_edit/_4_1/bbcourseorg&amp;recallUrl=%2Fwebapps%2Fportal%2Fexecute%2Ftabs%2FtabAction%3Ftab_tab_group_id%3D_1_1" id="moduleEditForm">
+                    <input type="hidden" name="blackboard.platform.security.NonceUtil.nonce" value="3355f352-678e-4821-bd3d-a6f548fd7cf9">
+                    <input type="hidden" name="cmd" id="cmd" value="processEdit">
+                    <input type="hidden" name="serviceLevel" id="serviceLevel" value="">
+
+                    <!-- Course Table -->
+                    <table id="blockAttributes_table_jsListFULL_Student_35314_1">
+                        <!-- Table Headers (simplified for brevity) -->
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Course Name</th>
+                                <th>Course ID</th>
+                                <th>Instructors</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blockAttributes_table_jsListFULL_Student_35314_1_body">
+                            <!-- Course Rows -->
+                            <tr id="blockAttributes_table_jsListFULL_Student_35314_1_row:_52268_1">
+                                <td align="LEFT" class="" id="miniListElement-showcoursename:row_0">
+                                    <input id="amc.showcourse._52268_1" type="checkbox" value="true" name="amc.showcourse._52268_1" checked="checked">
+                                </td>
+                                <td align="LEFT" class="" id="miniListElement-showcourseid:row_0">
+                                    <input id="amc.showcourseid._52268_1" type="checkbox" value="true" name="amc.showcourseid._52268_1" checked="checked">
+                                </td>
+                                <td align="LEFT" class="" id="miniListElement-showinstructors:row_0">
+                                    <input id="amc.showinstructors._52268_1" type="checkbox" value="true" name="amc.showinstructors._52268_1" checked="checked">
+                                </td>
+                            </tr>
+                            <!-- Additional course rows can be added here -->
+                        </tbody>
+                    </table>
+
+                    <!-- Term Table -->
+                    <table id="termDisplay_table_jsListTermDisplay">
+                        <!-- Table Headers (simplified for brevity) -->
+                        <thead>
+                            <tr>
+                                <th>Term Name</th>
+                                <th>Term Duration</th>
+                                <th>Show Term</th>
+                                <th>Expand Term</th>
+                            </tr>
+                        </thead>
+                        <tbody id="termDisplay_table_jsListTermDisplay_body">
+                            <!-- Term Rows -->
+                            <tr id="termDisplay_table_jsListTermDisplay_row:_243_1">
+                                <td align="LEFT" class="" id="miniListElement-showterm:row_0">
+                                    <input id="amc.showterm._243_1" type="checkbox" value="true" name="amc.showterm._243_1" checked="checked">
+                                </td>
+                                <td align="LEFT" class="" id="miniListElement-expandterm:row_0">
+                                    <input id="termCourses__243_1" type="checkbox" value="true" name="termCourses__243_1" checked="checked">
+                                </td>
+                            </tr>
+                            <!-- Additional term rows can be added here -->
+                        </tbody>
+                    </table>
+
+                    <!-- Submit Button -->
+                    <input id="bottom_Submit" class="submit button-1" name="bottom_Submit" type="submit" value="Submit">
+                </form>
+            </body>
+            </html>
+
             '''
 
             # Mock the POST request
@@ -245,7 +365,7 @@ class TestBlackboardSession(unittest.TestCase):
                 # Mock the logging.error function
                 with patch('logging.error') as mock_logging_error:
                     # Execute enable_instructors
-                    session.enable_instructors()
+                    session.enable_instructors_and_year_season()
 
                     # Check the response
                     self.assertFalse(session.instructorsFound)
@@ -257,22 +377,71 @@ class TestBlackboardSession(unittest.TestCase):
 
     # * Get Courses *#
 
-    def test_get_courses_logged_in(self):
+    def test_get_courses_with_instructors_logged_in(self):
         # Set up
         session = BlackboardSession()
-
         session.is_logged_in = True
+        session.instructorsFound = True
 
         # Mock the POST request
         with patch.object(session, '_send_post_request') as mock_post_request:
             mock_post_request.return_value.status_code = 200
             mock_post_request.return_value.content = '''
                 <html>
-                    <div id="_4_1termCourses__254_1">
-                        <ul>
-                            <li><a href="course1_link">Course 1</a></li>
-                            <li><a href="course2_link">Course 2</a></li>
-                        </ul>
+                    <div id="div_4_1">
+                        <div class="noItems" style="display:none">All of your courses are hidden.</div>
+
+                        <h3 class="termHeading-coursefakeclass" id="anonymous_element_7">
+                            <a id="afor_4_1termCourses__243_1" title="Collapse" href="#" class="itemHead itemHeadOpen"
+                                onclick="toggleTermLink('_4_1','termCourses__243_1', 'ebd88f5b-786d-4517-9ea5-cb227d799d4e')">
+                                <span class="hideoff">Collapse</span>
+                                Summer 2023</a>
+                        </h3>
+                        <div id="_4_1termCourses__243_1" style="">
+                            <h4 class="u_indent" id="anonymous_element_8">Courses where you are: Student</h4>
+                            <ul class="portletList-img courseListing coursefakeclass u_indent">
+                                <li>
+                                    <img alt=""
+                                        src="https://learn.content.blackboardcdn.com/3900.82.0-rel.45+82d6e90/images/ci/icons/bookopen_li.gif"
+                                        width="12" height="12">
+                                    <a href=" /webapps/blackboard/execute/launcher?type=Course&amp;id=_51316_1&amp;url="
+                                        target="_top">35221.202303: Culminating Undergraduate Experience: Thesis (CILE-400-01) Summer
+                                        2023</a>
+                                    <div class="courseInformation">
+                                        <span class="courseRole">
+                                            Instructor:
+                                        </span>
+                                        <span class="name">Michelle Gebhardt;&nbsp;&nbsp;</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <h3 class="termHeading-coursefakeclass" id="anonymous_element_9">
+                            <a id="afor_4_1termCourses__259_1" title="Collapse" href="#" class="termToggleLink itemHead itemHeadOpen"
+                                onclick="toggleTermLink('_4_1','termCourses__259_1', 'ebd88f5b-786d-4517-9ea5-cb227d799d4e')">
+                                <span class="hideoff">Collapse</span>
+                                Winter 2024</a>
+                        </h3>
+                        <div id="_4_1termCourses__259_1" style="">
+                            <h4 class="u_indent" id="anonymous_element_10">Courses where you are: Student</h4>
+                            <ul class="portletList-img courseListing coursefakeclass u_indent">
+                                <li>
+                                    <img alt=""
+                                        src="https://learn.content.blackboardcdn.com/3900.82.0-rel.45+82d6e90/images/ci/icons/bookopen_li.gif"
+                                        width="12" height="12">
+                                    <a href=" /webapps/blackboard/execute/launcher?type=Course&amp;id=_52268_1&amp;url="
+                                        target="_top">15664.202401: COOP-002-01: Co-op Educat Exp - Employed - WINTER</a>
+                                    <div class="courseInformation">
+                                        <span class="courseRole">
+                                            Instructor:
+                                        </span>
+                                        <span class="noItems">
+                                            No Instructors.
+                                        </span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </html>
             '''
@@ -282,14 +451,12 @@ class TestBlackboardSession(unittest.TestCase):
 
             # Check the response
             expected_courses = {
-                'Course 1': 'course1_link',
-                'Course 2': 'course2_link'
+                'CILE-400-01, Gebhardt, Summer 2023': '/webapps/blackboard/execute/launcher?type=Course&id=_51316_1&url=',
+                'COOP-002-01, No Instructor, Winter 2024': '/webapps/blackboard/execute/launcher?type=Course&id=_52268_1&url='
             }
             self.assertEqual(session.courses, expected_courses)
             self.assertAlmostEqual(
                 session.last_activity_time, time.time(), delta=1)
-
-    def test_get_courses_not_logged_in(self):
 
         # Set up
         session = BlackboardSession()

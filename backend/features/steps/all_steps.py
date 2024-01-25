@@ -173,10 +173,10 @@ def step_impl(context):
             mock_post_request.return_value.status_code = 302
             mock_post_request.return_value.headers = {
                 'Location': 'https://kettering.blackboard.com'}
-            context.session.enable_instructors()
+            context.session.enable_instructors_and_year_season()
             context.enable_instructors_response = "Instructors enabled"
     else:
-        context.session.enable_instructors()
+        context.session.enable_instructors_and_year_season()
         context.enable_instructors_response = context.session.response
 
 
