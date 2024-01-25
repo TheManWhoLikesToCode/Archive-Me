@@ -231,7 +231,7 @@ class TestBlackboardSession(unittest.TestCase):
                     'Location': 'https://kettering.blackboard.com'}
 
                 # Execute enable_instructors
-                session.enable_instructors_and_year()
+                session.enable_instructors_and_year_season()
 
                 # Check the response
                 self.assertTrue(session.instructorsFound)
@@ -245,7 +245,7 @@ class TestBlackboardSession(unittest.TestCase):
         session.is_logged_in = False
 
         # Execute enable_instructors
-        session.enable_instructors_and_year()
+        session.enable_instructors_and_year_season()
 
         # Check the response
         self.assertEqual(session.response, "Not logged in.")
@@ -265,7 +265,7 @@ class TestBlackboardSession(unittest.TestCase):
             # Mock the logging.error function
             with patch('logging.error') as mock_logging_error:
                 # Execute enable_instructors
-                session.enable_instructors_and_year()
+                session.enable_instructors_and_year_season()
 
                 # Check the response
                 self.assertFalse(session.instructorsFound)
@@ -365,7 +365,7 @@ class TestBlackboardSession(unittest.TestCase):
                 # Mock the logging.error function
                 with patch('logging.error') as mock_logging_error:
                     # Execute enable_instructors
-                    session.enable_instructors_and_year()
+                    session.enable_instructors_and_year_season()
 
                     # Check the response
                     self.assertFalse(session.instructorsFound)

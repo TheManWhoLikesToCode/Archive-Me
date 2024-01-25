@@ -111,7 +111,7 @@ class BlackboardSession:
             self.response = "Not logged in."
             return
 
-        self.enable_instructors_and_year()
+        self.enable_instructors_and_year_season()
         if self.get_InstructorsFound() == False:
             self.response = "No instructors found."
 
@@ -203,7 +203,7 @@ class BlackboardSession:
         except Exception as e:
             logging.error(f"An error occurred during login: {e}")
 
-    def enable_instructors_and_year(self):
+    def enable_instructors_and_year_season(self):
         """
 
         Enables instructors & course term year for all courses the user is taking.
