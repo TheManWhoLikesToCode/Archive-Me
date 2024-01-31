@@ -128,29 +128,51 @@ const app = (() => {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
     const responseContainer = document.getElementById("response-container");
-
+  
     try {
-      const response = await fetchWithErrorHandler(`${apiUrl}/login`, {
+      // Start the login process
+      let response = await fetchWithErrorHandler(`${apiUrl}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-        }),
+        body: JSON.stringify({ username, password }),
         credentials: 'include',
       });
-      const data = await response.json();
-
-      if (response.ok) {
-        sessionStorage.setItem("user", JSON.stringify({ username: username }));
-        window.location.href = '/userpage';
-      } else {
-        const message = data.message || 'Error occurred';
-        responseContainer.textContent = message;
-        responseContainer.classList.add("alert-danger");
+  
+      if (!response.ok) {
+        throw new Error('Failed to start login process');
       }
+  
+      const taskData = await response.json();
+      const taskId = taskData.task_id;
+  
+      // Polling for login status
+      const checkLoginStatus = async () => {
+        response = await fetchWithErrorHandler(`${apiUrl}/login/${taskId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+  
+        if (response.ok) {
+          const result = await response.json();
+          if (result.message === 'Login in progress') {
+            setTimeout(checkLoginStatus, 2000); // Poll every 2 seconds
+          } else {
+            sessionStorage.setItem("user", JSON.stringify({ username }));
+            window.location.href = '/userpage';
+          }
+        } else {
+          const message = (await response.json()).message || 'Error occurred';
+          responseContainer.textContent = message;
+          responseContainer.classList.add("alert-danger");
+        }
+      };
+  
+      // Start polling
+      checkLoginStatus();
     } catch (error) {
       responseContainer.textContent = error.message;
       responseContainer.classList.add("alert-danger");
@@ -159,6 +181,7 @@ const app = (() => {
       hideLoadingScreen();
     }
   };
+  
 
   const logoutUser = async () => {
     try {

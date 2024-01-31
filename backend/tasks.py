@@ -14,26 +14,26 @@ bb_session_manager = BlackboardSessionManager()
 
 
 @shared_task(name="scrape")
-@cross_origin()
 def scrape(username):
     try:
         bb_session = bb_session_manager.retrieve_bb_session(username)
 
         if not bb_session:
-            return jsonify({'error': 'Session not found'}), 400
+            return {'error': 'Session not found', 'status': 400}
 
         file_key = bb_session.scrape()
         if not bb_session.response:
             file_path = os.path.join(os.getcwd(), file_key)
             if not file_key or not os.path.isfile(file_path):
-                abort(404, description="File not found")
+                return {'error': 'File not found', 'status': 404}
 
-            return jsonify({'file_key': file_key})
+            return {'file_key': file_key, 'status': 200}
         else:
-            return jsonify({'error': bb_session.response}), 500
+            return {'error': bb_session.response, 'status': 500}
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return {'error': str(e), 'status': 500}
+
 
 
 @shared_task(name="login_task")
@@ -54,3 +54,12 @@ def login(username, password):
             return {'error': response}, 401
     except Exception as e:
         return {'error': str(e)}, 500
+    
+@shared_task(name="is_logged_in")
+@cross_origin(supports_credentials=True)
+def is_logged_in():
+    user_session = request.cookies.get('user_session')
+    if user_session and bb_session_manager.retrieve_bb_session(user_session):
+        return jsonify({'logged_in': True}), 200
+    else:
+        return jsonify({'logged_in': False}), 401
