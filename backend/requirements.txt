@@ -11,3 +11,4 @@ python-dotenv
 lxml
 behave
 assertpy
+celery
