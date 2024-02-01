@@ -4,10 +4,9 @@ client_config:
   client_secret: ${GOOGLE_CLIENT_SECRET}
 
 save_credentials: True
+get_refresh_token: True
 save_credentials_backend: file
 save_credentials_file: "credentials.json"
-
-get_refresh_token: True
 
 oauth_scope:
   - "https://www.googleapis.com/auth/drive"
